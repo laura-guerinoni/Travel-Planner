@@ -149,6 +149,13 @@
   .holi-nudge:hover { background:var(--secondary); color:#fff; }
   .holi-nudge-left { left:-22px; }
   .holi-nudge-right { right:-22px; }
+  .banner-label { cursor:text; border-radius:3px; }
+  .banner-label:hover { background:rgba(255,255,255,.35); }
+  .banner-label:focus { outline:1px solid rgba(255,255,255,.8); background:rgba(255,255,255,.4); }
+  .addholiday { display:block; width:100%; margin-bottom:6px; border:1px dashed var(--secondary); background:transparent;
+    color:var(--secondary); border-radius:999px; padding:6px; font-size:11px; font-weight:700; cursor:pointer;
+    text-transform:uppercase; letter-spacing:.06em; }
+  .addholiday:hover { background:rgba(var(--secondary-rgb),.08); }
 
   .tagpop { display:block; position:absolute; z-index:50; background:var(--card); border:1px solid var(--line);
     border-radius:10px; padding:6px; box-shadow:0 10px 28px rgba(0,0,0,.18); font-size:13px; width:190px; }
@@ -182,11 +189,12 @@
   .linkpop .addrow button { border:none; background:var(--primary); color:#fff; border-radius:6px; padding:0 8px;
     font:inherit; font-weight:700; cursor:pointer; }
 
-  /* ---- mobile: the 7-column month grid can't shrink to phone width without
-     becoming unreadable, so instead of cramming it, each panel scrolls
-     horizontally as one unit (all its rows — heads, weeks, holiday banners —
-     stay column-aligned since they share the same scroll container) while
-     cells keep their normal, legible size. ---- */
+  /* ---- mobile: a real day-by-day agenda list (day 12, then 13, then 14, ...)
+     instead of a shrunk-down or sideways-scrolling week grid. Each .grid.week
+     already contains its 7 days Mon->Sun in document order, and consecutive
+     weeks already follow each other in chronological order, so switching
+     every .grid to a single column makes the whole month stack top-to-bottom
+     in the correct day order for free — no reordering needed. ---- */
   @media (max-width: 720px) {
     body { padding: 16px 10px 16px 34px; }
     .month-label { width: 26px; font-size: 11px; letter-spacing: .08em; }
@@ -194,9 +202,11 @@
     .pills { gap: 6px; }
     .pill { font-size: 13px; padding: 8px 12px; }
     h1 { font-size: 26px; }
-    .panel.on { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px 4px; }
-    .panel.on .grid { grid-template-columns: repeat(7, 124px); width: max-content; }
-    .budget { overflow-x: visible; }
+    .grid.heads { display: none; }
+    .grid { grid-template-columns: 1fr; gap: 8px; }
+    .cell.empty { display: none; }
+    .grid.banner-row .banner { grid-column: 1 !important; }
+    .cellhead { gap: 8px; }
   }
 </style>
 </head>
@@ -487,7 +497,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-07-31-coastal-mobile';
+  var BUILD_ID = 'build-2026-07-31-holiday-editable-mobile-list';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -1072,12 +1082,35 @@
     renderHoliday(panel);
   }
 
+  function addHolidayToPanel(panel){
+    var maxDay = lastDayOfCalendar(panel);
+    panel.dataset.holidayStart = '1';
+    panel.dataset.holidayEnd = String(Math.min(3, maxDay));
+    if(!panel.dataset.holidayLabel) panel.dataset.holidayLabel = 'Holiday — time off';
+    renderHoliday(panel);
+  }
+
   function renderHoliday(panel){
     var start = parseInt(panel.dataset.holidayStart || '', 10);
     var end = parseInt(panel.dataset.holidayEnd || '', 10);
     panel.querySelectorAll(':scope > .grid.banner-row').forEach(function(n){ n.remove(); });
     panel.querySelectorAll('.cell.holi').forEach(function(c){ c.classList.remove('holi'); });
-    if(!start || !end || end < start) return;
+
+    var addBtn = panel.querySelector(':scope > .addholiday');
+    if(!start || !end || end < start){
+      if(!addBtn){
+        addBtn = document.createElement('button');
+        addBtn.type = 'button'; addBtn.className = 'addholiday jsctl';
+        addBtn.textContent = '+ Add holiday period';
+        addBtn.addEventListener('click', function(){ addHolidayToPanel(panel); });
+        var headsRow = panel.querySelector(':scope > .grid.heads');
+        panel.insertBefore(addBtn, headsRow || panel.firstChild);
+      }
+      return;
+    }
+    if(addBtn) addBtn.remove();
+
+    var label = panel.dataset.holidayLabel || 'Holiday — time off';
     var weeks = Array.prototype.slice.call(panel.querySelectorAll(':scope > .grid.week'));
     weeks.forEach(function(weekRow){
       var cells = Array.prototype.slice.call(weekRow.children);
@@ -1099,7 +1132,21 @@
       var banner = document.createElement('div');
       banner.className = 'banner';
       banner.style.gridColumn = firstCol + ' / ' + (lastCol + 1);
-      banner.textContent = 'Holiday — time off · Aug ' + start + '–' + end;
+
+      var labelSpan = document.createElement('span');
+      labelSpan.className = 'banner-label';
+      labelSpan.contentEditable = 'true';
+      labelSpan.textContent = label;
+      labelSpan.addEventListener('click', function(e){ e.stopPropagation(); });
+      labelSpan.addEventListener('input', function(){
+        panel.dataset.holidayLabel = labelSpan.textContent;
+        panel.querySelectorAll(':scope > .grid.banner-row .banner-label').forEach(function(other){
+          if(other !== labelSpan) other.textContent = labelSpan.textContent;
+        });
+      });
+      banner.appendChild(labelSpan);
+      banner.appendChild(document.createTextNode(' · Aug ' + start + '–' + end));
+
       if(containsStart){
         var nudgeL = document.createElement('button');
         nudgeL.type = 'button'; nudgeL.className = 'holi-nudge holi-nudge-left jsctl'; nudgeL.textContent = '◀';
@@ -1189,6 +1236,7 @@
 
       clone.querySelectorAll('.acts li').forEach(attachItemControls);
       clone.querySelectorAll('.grid .cell').forEach(attachCellControls);
+      renderHoliday(clone);
     });
   }
 
