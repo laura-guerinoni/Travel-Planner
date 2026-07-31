@@ -147,6 +147,9 @@
   .banner-label { cursor:text; border-radius:3px; }
   .banner-label:hover { background:rgba(255,255,255,.35); }
   .banner-label:focus { outline:1px solid rgba(255,255,255,.8); background:rgba(255,255,255,.4); }
+  .banner-remove { border:none; background:rgba(255,255,255,.4); color:var(--secondary); border-radius:50%;
+    width:14px; height:14px; font-size:8px; line-height:14px; padding:0; cursor:pointer; vertical-align:middle; }
+  .banner-remove:hover { background:#fff; }
   .addholiday { display:block; width:100%; margin-bottom:6px; border:1px dashed var(--secondary); background:transparent;
     color:var(--secondary); border-radius:999px; padding:6px; font-size:11px; font-weight:700; cursor:pointer;
     text-transform:uppercase; letter-spacing:.06em; }
@@ -492,7 +495,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-07-31-pill-reorder-holiday-flex';
+  var BUILD_ID = 'build-2026-07-31-multi-holiday-periods';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -998,23 +1001,58 @@
     return d ? parseInt(d.textContent, 10) : null;
   }
 
+  // Any number of holiday periods per panel, stored as a JSON array on
+  // data-holidays. Older published panels still carry the single-period
+  // data-holiday-start/-end/-label attributes from before this existed;
+  // getHolidays() migrates those into a one-item array on first read.
+  function getHolidays(panel){
+    if(panel.dataset.holidays){
+      try{ var arr = JSON.parse(panel.dataset.holidays); if(Array.isArray(arr)) return arr; }
+      catch(e){}
+    }
+    var s = parseInt(panel.dataset.holidayStart || '', 10);
+    var e = parseInt(panel.dataset.holidayEnd || '', 10);
+    if(s && e && e >= s){
+      return [{ start: s, end: e, label: panel.dataset.holidayLabel || 'Holiday — time off' }];
+    }
+    return [];
+  }
+  function setHolidays(panel, arr){
+    panel.dataset.holidays = JSON.stringify(arr);
+  }
+
   function refreshHoliCell(cell){
     var panel = cell.closest('.panel');
     if(!panel) return;
-    var start = parseInt(panel.dataset.holidayStart || '', 10);
-    var end = parseInt(panel.dataset.holidayEnd || '', 10);
     var dn = dayNumOfCell(cell);
-    if(!start || !end || dn === null || dn < start || dn > end){
-      cell.classList.remove('holi');
-      return;
-    }
-    cell.classList.toggle('holi', !cell.querySelector(':scope > .loc'));
+    var inAny = dn !== null && getHolidays(panel).some(function(h){ return dn >= h.start && dn <= h.end; });
+    cell.classList.toggle('holi', inAny && !cell.querySelector(':scope > .loc'));
   }
 
   function lastDayOfCalendar(panel){
     var days = [];
     panel.querySelectorAll('.daynum').forEach(function(d){ days.push(parseInt(d.textContent, 10)); });
     return Math.max.apply(null, days);
+  }
+
+  function promptForRange(maxDay, defaultText){
+    var input = window.prompt('Holiday period — enter the start and end day of the month (e.g. 5-10):', defaultText || '1-3');
+    if(input === null) return null;
+    var m = input.match(/(\d+)\s*[-–]\s*(\d+)/);
+    if(!m){ window.alert('Enter two day numbers separated by a dash, e.g. 5-10'); return null; }
+    var s = Math.max(1, Math.min(maxDay, parseInt(m[1], 10)));
+    var e = Math.max(1, Math.min(maxDay, parseInt(m[2], 10)));
+    if(e < s){ var tmp = s; s = e; e = tmp; }
+    return { start: s, end: e };
+  }
+
+  function addHolidayToPanel(panel){
+    var range = promptForRange(lastDayOfCalendar(panel));
+    if(!range) return;
+    var arr = getHolidays(panel);
+    arr.push({ start: range.start, end: range.end, label: 'Holiday — time off' });
+    setHolidays(panel, arr);
+    renderHoliday(panel);
   }
 
   // Dragging is delta-based (days moved = mouse pixels moved / cell size),
@@ -1027,15 +1065,16 @@
   // point sidesteps that ambiguity — no vertical movement keeps you in the
   // same week regardless of which row happens to be geometrically nearest.
   var dragState = null;
-  function startDrag(e, panel, which){
+  function startDrag(e, panel, holidayIdx, which){
     e.preventDefault();
     e.stopPropagation();
     var sample = panel.querySelector('.cell:not(.empty)');
     var cellRect = sample.getBoundingClientRect();
+    var h = getHolidays(panel)[holidayIdx];
     dragState = {
-      panel: panel, which: which,
+      panel: panel, holidayIdx: holidayIdx, which: which,
       startX: e.clientX, startY: e.clientY,
-      origValue: which === 'start' ? parseInt(panel.dataset.holidayStart, 10) : parseInt(panel.dataset.holidayEnd, 10),
+      origValue: which === 'start' ? h.start : h.end,
       cellWidth: cellRect.width,
       cellHeight: cellRect.height
     };
@@ -1051,12 +1090,13 @@
     var panel = dragState.panel;
     var maxDay = lastDayOfCalendar(panel);
     var newDay = Math.max(1, Math.min(maxDay, dragState.origValue + dayDelta));
-    var start = parseInt(panel.dataset.holidayStart, 10);
-    var end = parseInt(panel.dataset.holidayEnd, 10);
+    var arr = getHolidays(panel);
+    var h = arr[dragState.holidayIdx];
+    if(!h) return;
     if(dragState.which === 'start'){
-      if(newDay <= end && newDay !== start){ panel.dataset.holidayStart = String(newDay); renderHoliday(panel); }
+      if(newDay <= h.end && newDay !== h.start){ h.start = newDay; setHolidays(panel, arr); renderHoliday(panel); }
     } else {
-      if(newDay >= start && newDay !== end){ panel.dataset.holidayEnd = String(newDay); renderHoliday(panel); }
+      if(newDay >= h.start && newDay !== h.end){ h.end = newDay; setHolidays(panel, arr); renderHoliday(panel); }
     }
   }
   function onDragEnd(){
@@ -1066,96 +1106,106 @@
     document.removeEventListener('pointercancel', onDragEnd);
   }
 
-  function addHolidayToPanel(panel){
-    var maxDay = lastDayOfCalendar(panel);
-    var input = window.prompt('Holiday period — enter the start and end day of the month (e.g. 5-10):', '1-3');
-    if(input === null) return;
-    var m = input.match(/(\d+)\s*[-–]\s*(\d+)/);
-    if(!m){ window.alert('Enter two day numbers separated by a dash, e.g. 5-10'); return; }
-    var s = Math.max(1, Math.min(maxDay, parseInt(m[1], 10)));
-    var e = Math.max(1, Math.min(maxDay, parseInt(m[2], 10)));
-    if(e < s){ var tmp = s; s = e; e = tmp; }
-    panel.dataset.holidayStart = String(s);
-    panel.dataset.holidayEnd = String(e);
-    if(!panel.dataset.holidayLabel) panel.dataset.holidayLabel = 'Holiday — time off';
-    renderHoliday(panel);
-  }
-
   function renderHoliday(panel){
-    var start = parseInt(panel.dataset.holidayStart || '', 10);
-    var end = parseInt(panel.dataset.holidayEnd || '', 10);
+    var holidays = getHolidays(panel);
     panel.querySelectorAll(':scope > .grid.banner-row').forEach(function(n){ n.remove(); });
     panel.querySelectorAll('.cell.holi').forEach(function(c){ c.classList.remove('holi'); });
 
     var addBtn = panel.querySelector(':scope > .addholiday');
-    if(!start || !end || end < start){
-      if(!addBtn){
-        addBtn = document.createElement('button');
-        addBtn.type = 'button'; addBtn.className = 'addholiday jsctl';
-        addBtn.textContent = '+ Add holiday period';
-        addBtn.addEventListener('click', function(){ addHolidayToPanel(panel); });
-        var headsRow = panel.querySelector(':scope > .grid.heads');
-        panel.insertBefore(addBtn, headsRow || panel.firstChild);
-      }
-      return;
+    if(!addBtn){
+      addBtn = document.createElement('button');
+      addBtn.type = 'button'; addBtn.className = 'addholiday jsctl';
+      addBtn.addEventListener('click', function(){ addHolidayToPanel(panel); });
+      var headsRow = panel.querySelector(':scope > .grid.heads');
+      panel.insertBefore(addBtn, headsRow || panel.firstChild);
     }
-    if(addBtn) addBtn.remove();
+    addBtn.textContent = holidays.length ? '+ Add another holiday period' : '+ Add holiday period';
 
-    var label = panel.dataset.holidayLabel || 'Holiday — time off';
-    var weeks = Array.prototype.slice.call(panel.querySelectorAll(':scope > .grid.week'));
-    weeks.forEach(function(weekRow){
-      var cells = Array.prototype.slice.call(weekRow.children);
-      var firstCol = null, lastCol = null, containsStart = false, containsEnd = false;
-      cells.forEach(function(cell, idx){
-        var dn = dayNumOfCell(cell);
-        if(dn === null) return;
-        if(dn >= start && dn <= end){
-          if(firstCol === null) firstCol = idx + 1;
-          lastCol = idx + 1;
-          if(dn === start) containsStart = true;
-          if(dn === end) containsEnd = true;
-          if(!cell.querySelector(':scope > .loc')) cell.classList.add('holi');
-        }
-      });
-      if(firstCol === null) return;
-      var bannerRow = document.createElement('div');
-      bannerRow.className = 'grid banner-row';
-      var banner = document.createElement('div');
-      banner.className = 'banner';
-      banner.style.gridColumn = firstCol + ' / ' + (lastCol + 1);
-
-      var labelSpan = document.createElement('span');
-      labelSpan.className = 'banner-label';
-      labelSpan.contentEditable = 'true';
-      labelSpan.textContent = label;
-      labelSpan.addEventListener('click', function(e){ e.stopPropagation(); });
-      labelSpan.addEventListener('input', function(){
-        panel.dataset.holidayLabel = labelSpan.textContent;
-        panel.querySelectorAll(':scope > .grid.banner-row .banner-label').forEach(function(other){
-          if(other !== labelSpan) other.textContent = labelSpan.textContent;
+    holidays.forEach(function(h){
+      if(!h.label) h.label = 'Holiday — time off';
+      if(h.start >= 1 && h.end >= h.start){
+        panel.querySelectorAll('.cell').forEach(function(cell){
+          var dn = dayNumOfCell(cell);
+          if(dn !== null && dn >= h.start && dn <= h.end && !cell.querySelector(':scope > .loc')){
+            cell.classList.add('holi');
+          }
         });
-      });
-      banner.appendChild(labelSpan);
-      banner.appendChild(document.createTextNode(' · Aug ' + start + '–' + end));
+      }
+    });
 
-      if(containsStart){
-        var hl = document.createElement('span');
-        hl.className = 'handle handle-left jsctl';
-        hl.title = 'Drag to change the start day';
-        hl.style.touchAction = 'none';
-        hl.addEventListener('pointerdown', function(e){ startDrag(e, panel, 'start'); });
-        banner.appendChild(hl);
-      }
-      if(containsEnd){
-        var hrr = document.createElement('span');
-        hrr.className = 'handle handle-right jsctl';
-        hrr.title = 'Drag to change the end day';
-        hrr.style.touchAction = 'none';
-        hrr.addEventListener('pointerdown', function(e){ startDrag(e, panel, 'end'); });
-        banner.appendChild(hrr);
-      }
-      bannerRow.appendChild(banner);
-      panel.insertBefore(bannerRow, weekRow);
+    var weeks = Array.prototype.slice.call(panel.querySelectorAll(':scope > .grid.week'));
+    holidays.forEach(function(h, holidayIdx){
+      weeks.forEach(function(weekRow){
+        var cells = Array.prototype.slice.call(weekRow.children);
+        var firstCol = null, lastCol = null, containsStart = false, containsEnd = false;
+        cells.forEach(function(cell, idx){
+          var dn = dayNumOfCell(cell);
+          if(dn === null) return;
+          if(dn >= h.start && dn <= h.end){
+            if(firstCol === null) firstCol = idx + 1;
+            lastCol = idx + 1;
+            if(dn === h.start) containsStart = true;
+            if(dn === h.end) containsEnd = true;
+          }
+        });
+        if(firstCol === null) return;
+        var bannerRow = document.createElement('div');
+        bannerRow.className = 'grid banner-row';
+        var banner = document.createElement('div');
+        banner.className = 'banner';
+        banner.style.gridColumn = firstCol + ' / ' + (lastCol + 1);
+
+        var labelSpan = document.createElement('span');
+        labelSpan.className = 'banner-label';
+        labelSpan.contentEditable = 'true';
+        labelSpan.textContent = h.label;
+        labelSpan.addEventListener('click', function(e){ e.stopPropagation(); });
+        labelSpan.addEventListener('input', function(){
+          var arr = getHolidays(panel);
+          if(arr[holidayIdx]){ arr[holidayIdx].label = labelSpan.textContent; setHolidays(panel, arr); }
+          panel.querySelectorAll(':scope > .grid.banner-row').forEach(function(row, rowIdx){
+            var other = row.querySelector('.banner-label');
+            if(other && other !== labelSpan && row.dataset.holidayIdx === String(holidayIdx)){
+              other.textContent = labelSpan.textContent;
+            }
+          });
+        });
+        bannerRow.dataset.holidayIdx = String(holidayIdx);
+        banner.appendChild(labelSpan);
+        banner.appendChild(document.createTextNode(' · Aug ' + h.start + '–' + h.end + ' '));
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button'; removeBtn.className = 'banner-remove jsctl';
+        removeBtn.textContent = '✕';
+        removeBtn.title = 'Remove this holiday period';
+        removeBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          var arr = getHolidays(panel);
+          arr.splice(holidayIdx, 1);
+          setHolidays(panel, arr);
+          renderHoliday(panel);
+        });
+        banner.appendChild(removeBtn);
+
+        if(containsStart){
+          var hl = document.createElement('span');
+          hl.className = 'handle handle-left jsctl';
+          hl.title = 'Drag to change the start day';
+          hl.style.touchAction = 'none';
+          hl.addEventListener('pointerdown', function(e){ startDrag(e, panel, holidayIdx, 'start'); });
+          banner.appendChild(hl);
+        }
+        if(containsEnd){
+          var hrr = document.createElement('span');
+          hrr.className = 'handle handle-right jsctl';
+          hrr.title = 'Drag to change the end day';
+          hrr.style.touchAction = 'none';
+          hrr.addEventListener('pointerdown', function(e){ startDrag(e, panel, holidayIdx, 'end'); });
+          banner.appendChild(hrr);
+        }
+        bannerRow.appendChild(banner);
+        panel.insertBefore(bannerRow, weekRow);
+      });
     });
   }
 
@@ -1241,6 +1291,8 @@
       clone.classList.remove('on');
       clone.removeAttribute('data-holiday-start');
       clone.removeAttribute('data-holiday-end');
+      clone.removeAttribute('data-holiday-label');
+      clone.removeAttribute('data-holidays');
       clone.querySelectorAll('.jsctl').forEach(function(n){ n.remove(); });
       clone.querySelectorAll('.tagpop, .linkpop').forEach(function(n){ n.remove(); });
       clone.querySelectorAll('.loc, .acts, .cost').forEach(function(n){ n.remove(); });
