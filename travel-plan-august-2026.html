@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>
+(function(){
+  try {
+    if ((location.protocol === 'http:' || location.protocol === 'https:') &&
+        localStorage.getItem('travelPlanHtml_v1')) {
+      document.documentElement.style.visibility = 'hidden';
+    }
+  } catch(e){}
+})();
+</script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Travel Plan — August 2026</title>
+<style>
+  :root { --bg:#fdece0; --card:#fffaf5; --ink:#3a2b25; --muted:#9c8073; --line:#f3d9c4; --primary:#d9663f; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:32px 16px 32px 56px; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:1120px; margin:0 auto; }
+  header { text-align:center; margin-bottom:20px; }
+  h1 { margin:0 0 10px; font-size:34px; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .pill { cursor:pointer; font:inherit; font-size:14px; font-weight:600; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); border-radius:999px; padding:9px 16px; }
+  .pill span { opacity:.7; font-weight:700; }
+  .pill.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .panel { display:none; }
+  .panel.on { display:block; }
+  .kicker { text-transform:uppercase; letter-spacing:.14em; font-size:12px; color:var(--muted); margin:20px 0 0; text-align:center; }
+  .sub { color:var(--muted); margin:6px 0 0; text-align:center; }
+  .total { text-align:center; }
+  .total { margin:14px auto 0; width:max-content; border:1px solid var(--line); background:var(--card);
+    border-radius:999px; padding:8px 16px; font-size:14px; font-weight:700; }
+  .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+  .heads { margin-bottom:8px; }
+  .week { margin-bottom:8px; align-items:start; }
+  .banner-row { margin-bottom:6px; }
+  .banner { background:rgba(217,102,63,.14); color:var(--primary); border:1px solid rgba(217,102,63,.35);
+    border-radius:999px; padding:4px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+  .wdhead { text-align:center; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:12px; min-height:104px; padding:8px; }
+  .cell.empty { background:transparent; border:none; min-height:0; }
+  .cell.holi { background:rgba(217,102,63,.08); border-color:rgba(217,102,63,.25); }
+  .cell.active { border-color:var(--primary); box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .cellhead { display:flex; align-items:baseline; gap:6px; }
+  .daynum { font-weight:700; font-size:15px; }
+  .wd { font-size:11px; color:var(--muted); }
+  .loc { margin:6px 0; font-size:12px; font-weight:700; }
+  .acts { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .acts li { font-size:11px; }
+  .chip { border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; display:inline-block; margin-bottom:3px; }
+  .title { display:block; font-weight:600; }
+  .line { display:block; color:var(--muted); }
+  .price { display:block; font-weight:700; }
+  .price em { font-style:normal; font-weight:400; color:var(--muted); }
+  .cost { margin:8px 0 0; padding-top:6px; border-top:1px solid var(--line); font-size:11px; font-weight:700; color:var(--muted); }
+  h2 { margin:26px 0 12px; font-size:20px; }
+  .budget { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; }
+  .budget ul { margin:0; padding:0; list-style:none; }
+  .budget li { display:flex; justify-content:space-between; gap:12px; font-size:14px;
+    padding:8px 0; border-bottom:1px solid var(--line); }
+  .budget li:last-child { border-bottom:none; }
+  .budget em { color:var(--muted); font-style:normal; }
+  .budget strong { color:var(--primary); }
+  .fine { color:var(--muted); font-size:12px; margin:10px 0 0; }
+  footer { margin-top:28px; text-align:center; color:var(--muted); font-size:13px; }
+  @media print { body { background:#fff; padding:0; } .panel { display:block !important; } .pills { display:none; } }
+  .month-label { position:fixed; left:0; top:0; bottom:0; width:40px; background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center; writing-mode:vertical-rl; text-orientation:mixed;
+    transform:rotate(180deg); font-weight:800; font-size:15px; letter-spacing:.14em; text-transform:uppercase;
+    z-index:30; box-shadow:2px 0 6px rgba(0,0,0,.08); }
+
+  .icontoolbar { position:fixed; top:14px; right:16px; z-index:70; display:flex; flex-direction:column;
+    align-items:flex-end; gap:4px; }
+  .icon-btn { width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--card);
+    color:var(--ink); cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center;
+    padding:0; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .icon-btn:hover { background:var(--bg); }
+  .save-status { font-size:11px; color:var(--muted); text-align:right; max-width:160px; min-height:14px; }
+  .save-status.changelink { text-decoration:underline; cursor:pointer; }
+
+  .pills { position:relative; }
+  .pill { position:relative; display:inline-flex; align-items:center; gap:6px; }
+  .pill-name { outline:none; }
+  .pill-remove { display:none; font-size:13px; line-height:1; opacity:.75; padding:0 2px; border-radius:4px; }
+  .pill-remove:hover { opacity:1; background:rgba(0,0,0,.12); }
+  .pill:hover .pill-remove { display:inline-block; }
+  .pill.add { width:34px; height:34px; padding:0; border-radius:50%; display:inline-flex; align-items:center;
+    justify-content:center; font-weight:800; font-size:16px; }
+
+  .budget-name { outline:none; }
+
+  .cell { position:relative; }
+
+  .itemctl { display:none; float:right; }
+  li:hover .itemctl, li:focus-within .itemctl { display:inline-flex; }
+  .itemmenu-btn { border:none; background:var(--line); color:var(--ink); border-radius:6px; font-size:12px;
+    font-weight:800; width:20px; height:18px; line-height:18px; padding:0; cursor:pointer; }
+  .itemmenu-btn:hover { background:var(--primary); color:#fff; }
+
+  .itemmenu { position:absolute; z-index:55; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:4px; box-shadow:0 10px 28px rgba(0,0,0,.18); font-size:13px; width:160px; }
+  .itemmenu-row { padding:6px 8px; border-radius:6px; cursor:pointer; white-space:nowrap; }
+  .itemmenu-row:hover { background:var(--bg); }
+  .itemmenu-row.danger { color:#d9534f; }
+  .itemmenu-row.danger:hover { background:rgba(217,83,79,.1); }
+
+  .addact { display:none; width:100%; margin-top:6px; border:1px dashed var(--line); background:transparent;
+    color:var(--muted); border-radius:8px; padding:4px; font-size:11px; font-weight:700; cursor:pointer; }
+  .cell:hover .addact, .cell:focus-within .addact { display:block; }
+  .cleardaybtn { display:none; position:absolute; top:4px; right:6px; border:none; background:transparent;
+    color:var(--muted); font-size:11px; cursor:pointer; }
+  .cleardaybtn.has-content { display:none; }
+  .cell:hover .cleardaybtn.has-content { display:inline-block; }
+
+  [contenteditable="true"] { border-radius:4px; }
+  [contenteditable="true"]:hover { background:rgba(217,102,63,.06); }
+  [contenteditable="true"]:focus { outline:1px solid var(--primary); background:#fff; }
+
+  .acts li { position:relative; }
+  .acts li:hover .photopreview { display:block; }
+
+  .linkicons { display:inline-flex; gap:3px; margin-left:6px; vertical-align:middle; }
+  .linkarrow { text-decoration:none; font-size:11px; line-height:1; color:var(--primary); cursor:pointer; }
+  .linkarrow:hover { text-decoration:underline; }
+  .linkadd { font-size:10px; color:var(--muted); cursor:pointer; border:1px dashed var(--line); border-radius:4px;
+    padding:0 3px; line-height:14px; }
+  .linkadd:hover { color:var(--primary); border-color:var(--primary); }
+
+  .photoicon { position:relative; display:inline-block; margin-left:4px; font-size:11px; cursor:pointer; }
+  .photoicon .photopreview { display:none; position:absolute; z-index:60; left:50%; transform:translateX(-50%);
+    top:100%; margin-top:6px; width:220px; max-width:60vw; max-height:260px; object-fit:cover; border-radius:8px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25); border:2px solid var(--card); background:#fff; }
+
+  .banner { position:relative; overflow:visible; }
+  .handle { position:absolute; top:1px; bottom:1px; width:14px; cursor:ew-resize; border-radius:4px;
+    background:repeating-linear-gradient(to right, rgba(255,255,255,.6) 0 2px, transparent 2px 5px);
+    opacity:.6; }
+  .handle:hover { opacity:1; }
+  .handle-left { left:1px; }
+  .handle-right { right:1px; }
+  .holi-nudge { position:absolute; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:50%;
+    border:1px solid var(--primary); background:#fff; color:var(--primary); font-size:9px; line-height:16px;
+    padding:0; cursor:pointer; z-index:5; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+  .holi-nudge:hover { background:var(--primary); color:#fff; }
+  .holi-nudge-left { left:-22px; }
+  .holi-nudge-right { right:-22px; }
+
+  .tagpop { display:block; position:absolute; z-index:50; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:6px; box-shadow:0 10px 28px rgba(0,0,0,.18); font-size:13px; width:190px; }
+  .tagpop-row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; cursor:pointer;
+    white-space:nowrap; }
+  .tagpop-row:hover { background:var(--bg); }
+  .tagpop-swatch { display:inline-block; width:14px; height:14px; border-radius:4px; flex:none; }
+  .tagpop hr { border:none; border-top:1px solid var(--line); margin:6px 2px; }
+  .tagpop input[type="text"] { width:100%; box-sizing:border-box; font:inherit; font-size:12px; padding:5px 8px;
+    border:1px solid var(--line); border-radius:6px; margin-bottom:5px; }
+  .tagpop input[type="color"] { width:100%; margin-bottom:5px; border:1px solid var(--line); border-radius:6px;
+    height:28px; padding:2px; box-sizing:border-box; }
+  .tagpop .newbtn { padding:6px 8px; text-align:left; font-weight:700; color:var(--primary); cursor:pointer;
+    border-radius:6px; }
+  .tagpop .newbtn:hover { background:var(--bg); }
+  .tagpop .formwrap { padding:2px 6px 4px; }
+  .tagpop .addbtn { width:100%; margin-top:2px; border:none; background:var(--primary); color:#fff; border-radius:6px;
+    padding:7px; font:inherit; font-weight:700; cursor:pointer; }
+
+  .linkpop { display:block; position:absolute; z-index:50; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:8px; box-shadow:0 10px 28px rgba(0,0,0,.18); font-size:12px; width:220px; }
+  .linkpop-row { display:flex; align-items:center; gap:6px; padding:4px 2px; }
+  .linkpop-row a { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);
+    text-decoration:none; }
+  .linkpop-row a:hover { text-decoration:underline; }
+  .linkpop-row button { border:none; background:var(--line); color:var(--ink); border-radius:5px; font-size:10px;
+    width:16px; height:16px; line-height:16px; padding:0; cursor:pointer; flex:none; }
+  .linkpop .addrow { display:flex; gap:4px; margin-top:6px; }
+  .linkpop .addrow input { flex:1; font:inherit; font-size:12px; padding:4px 6px; border:1px solid var(--line);
+    border-radius:6px; }
+  .linkpop .addrow button { border:none; background:var(--primary); color:#fff; border-radius:6px; padding:0 8px;
+    font:inherit; font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="month-label">August 2026</div>
+<div class="wrap">
+  <header>
+    <div class="pills">
+      <button class="pill on" data-opt="option-1" type="button"><span class="pill-name">1. Slovakia · Hungary · Poland</span> <span class="pill-price">&euro;997</span><span class="pill-remove" title="Remove option">&times;</span></button>
+      <button class="pill" data-opt="option-2" type="button"><span class="pill-name">2. Hungary · Poland</span> <span class="pill-price">&euro;786</span><span class="pill-remove" title="Remove option">&times;</span></button>
+      <button class="pill add" id="addOptionBtn" type="button" title="Add option">+</button>
+    </div>
+  </header>
+  <div class="icontoolbar">
+    <button id="saveBtn" type="button" class="icon-btn" title="Save">💾</button>
+    <span id="saveStatus" class="save-status"></span>
+    <span id="changeFileBtn" class="save-status changelink" style="display:none;">change save location</span>
+  </div>
+  <section class="panel on" id="panel-option-1" data-holiday-start="12" data-holiday-end="25">
+    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column:3 / 8">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div><p class="loc">Košice → Budapest</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Košice → Budapest</span>
+                <span class="line">🕒 07:10 → 11:05 (~4h)</span>
+                <span class="line">Direct MÁV/ZSSK, cheaper booked online</span>
+                <span class="price"><span class="price-val">&euro;25</span> <em class="price-note">~22–30 € one way</em></span>
+              </li><li>
+                <span class="chip" data-icon="🌸" data-name="Festival" style="background:#d16aa8;color:#ffffff">🌸 Festival</span>
+                <span class="title">Sziget Festival — 1 day ticket</span>
+                <span class="line">🕒 Gates 12:00 → late night</span>
+                <span class="line">Hajógyári Island, one night on site</span>
+                <span class="price"><span class="price-val">&euro;116</span> <em class="price-note">Sziget 2026 (Aug 11–15) day pass €109 + fees</em></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">One night in Budapest</span>
+                
+                <span class="line">Camping on the island or a city hostel</span>
+                <span class="price"><span class="price-val">&euro;45</span></span>
+              </li></ul><p class="cost">Day total &euro;186</p></div><div class="cell active"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div><p class="loc">Budapest → Košice</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train back to Košice</span>
+                <span class="line">🕒 16:35 → 20:30 (~4h)</span>
+                
+                <span class="price"><span class="price-val">&euro;25</span></span>
+              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell holi"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div><p class="loc">Košice → Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Košice → Miskolc</span>
+                <span class="line">🕒 09:20 → 11:00 (~1h40)</span>
+                <span class="line">MÁV/ZSSK regional, buy at the station</span>
+                <span class="price"><span class="price-val">&euro;12</span></span>
+              </li><li>
+                <span class="chip" data-icon="♨️" data-name="Thermal" style="background:#c96a3f;color:#ffffff">♨️ Thermal</span>
+                <span class="title">Miskolctapolca Cave Bath</span>
+                <span class="line">🕒 13:00 → 18:00</span>
+                <span class="line">Thermal pools inside natural rock caves</span>
+                <span class="price"><span class="price-val">&euro;10</span> <em class="price-note">Adult entry ~4 000 HUF</em></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Hotel in Miskolc (2 nights)</span>
+                
+                <span class="line">Mid-range 3★ double, per person per night</span>
+                <span class="price"><span class="price-val">&euro;90</span> <em class="price-note">2 nights × ~45 €</em></span>
+              </li></ul><p class="cost">Day total &euro;112</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 8">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div><p class="loc">Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="title">Miskolc slow day</span>
+                <span class="line">🕒 All day</span>
+                <span class="line">Lillafüred, Diósgyőr castle, tram ride</span>
+                <span class="price"><span class="price-val">&euro;20</span> <em class="price-note">Tickets + local transport</em></span>
+              </li></ul><p class="cost">Day total &euro;20</p></div><div class="cell active"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div><p class="loc">Miskolc → Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Miskolc → Debrecen</span>
+                <span class="line">🕒 10:05 → 12:30 (~2h25)</span>
+                <span class="line">Change in Füzesabony or via Nyíregyháza</span>
+                <span class="price"><span class="price-val">&euro;11</span></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Hotel in Debrecen (2 nights)</span>
+                
+                <span class="line">Carnival week — book early, prices spike</span>
+                <span class="price"><span class="price-val">&euro;130</span> <em class="price-note">2 nights × ~65 €</em></span>
+              </li></ul><p class="cost">Day total &euro;141</p></div><div class="cell active"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div><p class="loc">Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🌸" data-name="Festival" style="background:#d16aa8;color:#ffffff">🌸 Festival</span>
+                <span class="title">Debrecen Flower Carnival</span>
+                <span class="line">🕒 09:00 parade → late night concerts</span>
+                <span class="line">Flower floats parade through the centre</span>
+                <span class="price"><span class="price-val">&euro;25</span> <em class="price-note">Grandstand seat / event pass</em></span>
+              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div><p class="loc">Debrecen → Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Debrecen → Kraków</span>
+                <span class="line">🕒 Full travel day (~9–11h, 1–2 changes)</span>
+                <span class="line">Via Budapest/Katowice or via Košice–Przemyśl</span>
+                <span class="price"><span class="price-val">&euro;45</span> <em class="price-note">Via Košice–Poprad–Kraków, ~9–12h</em></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Kraków stay (2 nights)</span>
+                
+                
+                <span class="price"><span class="price-val">&euro;110</span> <em class="price-note">2 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total &euro;155</p></div><div class="cell active"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div><p class="loc">Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="title">Kraków full day</span>
+                <span class="line">🕒 All day</span>
+                <span class="line">Wawel, Kazimierz, Rynek Główny</span>
+                <span class="price"><span class="price-val">&euro;40</span> <em class="price-note">Entries + food extra</em></span>
+              </li></ul><p class="cost">Day total &euro;40</p></div><div class="cell active"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div><p class="loc">Kraków → Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">PKP Intercity Kraków → Gdańsk</span>
+                <span class="line">🕒 08:40 → 14:40 (~6h)</span>
+                <span class="line">Book in advance for the cheap fare</span>
+                <span class="price"><span class="price-val">&euro;25</span></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Gdańsk stay (3 nights)</span>
+                
+                
+                <span class="price"><span class="price-val">&euro;165</span> <em class="price-note">3 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total &euro;190</p></div><div class="cell active"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div><p class="loc">Gdańsk / Sopot</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏖️" data-name="Beach" style="background:#5fbcc0;color:#14213d">🏖️ Beach</span>
+                <span class="title">Cute beach day in Sopot</span>
+                <span class="line">🕒 SKM train 25 min, then all day</span>
+                <span class="line">Sopot pier + Jelitkowo sand</span>
+                <span class="price"><span class="price-val">&euro;8</span> <em class="price-note">SKM return + sunbed</em></span>
+              </li></ul><p class="cost">Day total &euro;8</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 3">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div><p class="loc">Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="title">Gdańsk old town &amp; amber</span>
+                <span class="line">🕒 All day</span>
+                <span class="line">Motława river, Mariacka street, museums</span>
+                <span class="price"><span class="price-val">&euro;25</span></span>
+              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div><p class="loc">Gdańsk → Milan</p><ul class="acts"><li>
+                <span class="chip" data-icon="✈️" data-name="Flight" style="background:#7a6ec9;color:#ffffff">✈️ Flight</span>
+                <span class="title">Flight Gdańsk GDN → Milan (Wizz/Ryanair)</span>
+                <span class="line">🕒 Afternoon, ~2h15</span>
+                <span class="line">Trip ends — direct low-cost route</span>
+                <span class="price"><span class="price-val">&euro;70</span> <em class="price-note">One-way, hand luggage only</em></span>
+              </li></ul><p class="cost">Day total &euro;70</p></div><div class="cell"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
+  </section><section class="panel" id="panel-option-2" data-holiday-start="13" data-holiday-end="26">
+    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column:4 / 8">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div><p class="loc">Košice → Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Košice → Miskolc</span>
+                <span class="line">🕒 09:20 → 11:00 (~1h40)</span>
+                <span class="line">MÁV/ZSSK regional, buy at the station</span>
+                <span class="price"><span class="price-val">&euro;12</span></span>
+              </li><li>
+                <span class="chip" data-icon="♨️" data-name="Thermal" style="background:#c96a3f;color:#ffffff">♨️ Thermal</span>
+                <span class="title">Miskolctapolca Cave Bath</span>
+                <span class="line">🕒 13:00 → 18:00</span>
+                <span class="line">Thermal pools inside natural rock caves</span>
+                <span class="price"><span class="price-val">&euro;10</span> <em class="price-note">Adult entry ~4 000 HUF</em></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Hotel in Miskolc (2 nights)</span>
+                
+                <span class="line">Mid-range 3★ double, per person per night</span>
+                <span class="price"><span class="price-val">&euro;90</span> <em class="price-note">2 nights × ~45 €</em></span>
+              </li></ul><p class="cost">Day total &euro;112</p></div><div class="cell active"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div><p class="loc">Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="title">Miskolc slow day</span>
+                <span class="line">🕒 All day</span>
+                <span class="line">Lillafüred, Diósgyőr castle, tram ride</span>
+                <span class="price"><span class="price-val">&euro;20</span> <em class="price-note">Tickets + local transport</em></span>
+              </li></ul><p class="cost">Day total &euro;20</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 8">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div><p class="loc">Miskolc → Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Miskolc → Debrecen</span>
+                <span class="line">🕒 10:05 → 12:30 (~2h25)</span>
+                <span class="line">Change in Füzesabony or via Nyíregyháza</span>
+                <span class="price"><span class="price-val">&euro;11</span></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Hotel in Debrecen (2 nights)</span>
+                
+                <span class="line">Carnival week — book early, prices spike</span>
+                <span class="price"><span class="price-val">&euro;130</span> <em class="price-note">2 nights × ~65 €</em></span>
+              </li></ul><p class="cost">Day total &euro;141</p></div><div class="cell active"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div><p class="loc">Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🌸" data-name="Festival" style="background:#d16aa8;color:#ffffff">🌸 Festival</span>
+                <span class="title">Debrecen Flower Carnival</span>
+                <span class="line">🕒 09:00 parade → late night concerts</span>
+                <span class="line">Flower floats parade through the centre</span>
+                <span class="price"><span class="price-val">&euro;25</span> <em class="price-note">Grandstand seat / event pass</em></span>
+              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div><p class="loc">Debrecen → Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">Train Debrecen → Kraków</span>
+                <span class="line">🕒 Full travel day (~9–11h, 1–2 changes)</span>
+                <span class="line">Via Budapest/Katowice or via Košice–Przemyśl</span>
+                <span class="price"><span class="price-val">&euro;45</span> <em class="price-note">Via Košice–Poprad–Kraków, ~9–12h</em></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Kraków stay (2 nights)</span>
+                
+                
+                <span class="price"><span class="price-val">&euro;110</span> <em class="price-note">2 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total &euro;155</p></div><div class="cell active"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div><p class="loc">Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="title">Kraków full day</span>
+                <span class="line">🕒 All day</span>
+                <span class="line">Wawel, Kazimierz, Rynek Główny</span>
+                <span class="price"><span class="price-val">&euro;40</span> <em class="price-note">Entries + food extra</em></span>
+              </li></ul><p class="cost">Day total &euro;40</p></div><div class="cell active"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div><p class="loc">Kraków → Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="title">PKP Intercity Kraków → Gdańsk</span>
+                <span class="line">🕒 08:40 → 14:40 (~6h)</span>
+                <span class="line">Book in advance for the cheap fare</span>
+                <span class="price"><span class="price-val">&euro;25</span></span>
+              </li><li>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="title">Gdańsk stay (3 nights)</span>
+                
+                
+                <span class="price"><span class="price-val">&euro;165</span> <em class="price-note">3 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total &euro;190</p></div><div class="cell active"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div><p class="loc">Gdańsk / Sopot</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏖️" data-name="Beach" style="background:#5fbcc0;color:#14213d">🏖️ Beach</span>
+                <span class="title">Cute beach day in Sopot</span>
+                <span class="line">🕒 SKM train 25 min, then all day</span>
+                <span class="line">Sopot pier + Jelitkowo sand</span>
+                <span class="price"><span class="price-val">&euro;8</span> <em class="price-note">SKM return + sunbed</em></span>
+              </li></ul><p class="cost">Day total &euro;8</p></div><div class="cell active"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div><p class="loc">Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="title">Gdańsk old town &amp; amber</span>
+                <span class="line">🕒 All day</span>
+                <span class="line">Motława river, Mariacka street, museums</span>
+                <span class="price"><span class="price-val">&euro;25</span></span>
+              </li></ul><p class="cost">Day total &euro;25</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 4">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div><p class="loc">Gdańsk → Milan</p><ul class="acts"><li>
+                <span class="chip" data-icon="✈️" data-name="Flight" style="background:#7a6ec9;color:#ffffff">✈️ Flight</span>
+                <span class="title">Flight Gdańsk GDN → Milan (Wizz/Ryanair)</span>
+                <span class="line">🕒 Afternoon, ~2h15</span>
+                <span class="line">Trip ends — direct low-cost route</span>
+                <span class="price"><span class="price-val">&euro;70</span> <em class="price-note">One-way, hand luggage only</em></span>
+              </li></ul><p class="cost">Day total &euro;70</p></div><div class="cell holi"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
+  </section>
+  <h2>Budget overview</h2>
+  <div class="budget">
+    <ul><li><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>&euro;997</strong></li><li><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>&euro;786</strong></li></ul>
+    <p class="fine">Estimates per person: trains, festival tickets, thermal bath, accommodation and the flight. Food and drinks not included.</p>
+  </div>
+  <footer>Travel plan · August 2026</footer>
+</div>
+<script id="tagData" type="application/json">
+[
+  {
+    "icon": "🚆",
+    "name": "Train",
+    "bg": "#4a86c5",
+    "fg": "#ffffff"
+  },
+  {
+    "icon": "🌸",
+    "name": "Festival",
+    "bg": "#d16aa8",
+    "fg": "#ffffff"
+  },
+  {
+    "icon": "🏨",
+    "name": "Stay",
+    "bg": "#4fae8b",
+    "fg": "#ffffff"
+  },
+  {
+    "icon": "♨️",
+    "name": "Thermal",
+    "bg": "#c96a3f",
+    "fg": "#ffffff"
+  },
+  {
+    "icon": "🏛️",
+    "name": "City",
+    "bg": "#e8e3d5",
+    "fg": "#3a3a46"
+  },
+  {
+    "icon": "🏖️",
+    "name": "Beach",
+    "bg": "#5fbcc0",
+    "fg": "#14213d"
+  },
+  {
+    "icon": "✈️",
+    "name": "Flight",
+    "bg": "#7a6ec9",
+    "fg": "#ffffff"
+  }
+]
+</script>
+<script>
+(function(){
+  // On a hosted (http/https) page, restore the last autosaved version from
+  // localStorage before anything else runs, so the rest of this script's
+  // init (attaching controls, rendering the holiday banner, etc.) operates
+  // on the restored content rather than the static defaults baked into the
+  // file. Pure DOM replacement — no document.write, which was tried first
+  // and ended up duplicating the whole page instead of replacing it.
+  (function restoreFromLocalStorage(){
+    var hosted = location.protocol === 'http:' || location.protocol === 'https:';
+    if(!hosted) return;
+    try{
+      var saved = localStorage.getItem('travelPlanHtml_v1');
+      if(saved){
+        var parsed = new DOMParser().parseFromString(saved, 'text/html');
+        var newWrap = parsed.querySelector('.wrap');
+        var curWrap = document.querySelector('.wrap');
+        if(newWrap && curWrap) curWrap.replaceWith(newWrap);
+        var newTagData = parsed.getElementById('tagData');
+        var curTagData = document.getElementById('tagData');
+        if(newTagData && curTagData) curTagData.textContent = newTagData.textContent;
+      }
+    } catch(e){}
+    document.documentElement.style.visibility = '';
+  })();
+
+  var TAGDATA_EL = document.getElementById('tagData');
+  var TAGS = [];
+  try { TAGS = JSON.parse(TAGDATA_EL.textContent); } catch(e){ TAGS = []; }
+
+  var EDITABLE_SEL = '.title, .line, .loc, .price-val, .price-note, .pill-name, .budget-name';
+
+  function luminance(hex){
+    hex = hex.replace('#','');
+    if(hex.length===3){ hex = hex.split('').map(function(c){return c+c;}).join(''); }
+    var r=parseInt(hex.substr(0,2),16)/255, g=parseInt(hex.substr(2,2),16)/255, b=parseInt(hex.substr(4,2),16)/255;
+    function lin(v){ return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); }
+    return 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b);
+  }
+  function fgFor(bg){ return luminance(bg) > 0.45 ? '#14213d' : '#ffffff'; }
+  function persistTags(){
+    var json = JSON.stringify(TAGS, null, 2);
+    if(TAGDATA_EL.textContent !== json) TAGDATA_EL.textContent = json;
+  }
+  function tagKey(t){ return t.icon + '|' + t.name; }
+  function addTagIfNew(t){
+    var k = tagKey(t);
+    if(!TAGS.some(function(x){ return tagKey(x) === k; })){ TAGS.push(t); persistTags(); }
+  }
+
+  function makeEditable(el){ el.contentEditable = 'true'; }
+
+  // ---- pill / panel switching (event delegation so new pills just work) ----
+  document.querySelector('.pills').addEventListener('click', function(e){
+    var btn = e.target.closest('.pill');
+    if(!btn || btn.id === 'addOptionBtn') return;
+    if(e.target.closest('.pill-remove') || e.target.closest('.pill-name')) return;
+    var id = btn.getAttribute('data-opt');
+    document.querySelectorAll('.pill[data-opt]').forEach(function (b) { b.classList.toggle('on', b === btn); });
+    document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('on', p.id === 'panel-' + id); });
+  });
+
+  function parseMoney(str){
+    var m = String(str).replace(',', '.').match(/(-?\d+(\.\d+)?)/);
+    return m ? parseFloat(m[1]) : 0;
+  }
+  function formatMoney(n){
+    n = Math.round(n * 100) / 100;
+    if (Math.round(n) === n) return '€' + Math.round(n);
+    return '€' + n.toFixed(2);
+  }
+
+  function recomputeCell(cell){
+    var vals = cell.querySelectorAll('.acts .price-val');
+    var sum = 0;
+    vals.forEach(function(v){ sum += parseMoney(v.textContent); });
+    var costEl = cell.querySelector(':scope > .cost');
+    if(vals.length === 0){
+      if(costEl) costEl.remove();
+    } else {
+      if(!costEl){
+        costEl = document.createElement('p');
+        costEl.className = 'cost';
+        var addactEl = cell.querySelector(':scope > .addact');
+        if(addactEl) cell.insertBefore(costEl, addactEl); else cell.appendChild(costEl);
+      }
+      costEl.textContent = 'Day total ' + formatMoney(sum);
+    }
+    recomputePanel(cell.closest('.panel'));
+  }
+
+  function recomputePanel(panel){
+    if(!panel) return;
+    var sum = 0;
+    panel.querySelectorAll('.cost').forEach(function(c){ sum += parseMoney(c.textContent); });
+
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+    var idx = panels.indexOf(panel);
+    var pills = document.querySelectorAll('.pill[data-opt]');
+    if(pills[idx]){
+      var priceSpan = pills[idx].querySelector('.pill-price');
+      if(priceSpan) priceSpan.textContent = formatMoney(sum);
+    }
+    var budgetItems = document.querySelectorAll('.budget li');
+    if(budgetItems[idx]){
+      var strong = budgetItems[idx].querySelector('strong');
+      if(strong) strong.textContent = formatMoney(sum);
+    }
+  }
+
+  // ---- links (multiple per activity) ----
+  function getLinks(li){
+    try{ var v = JSON.parse(li.getAttribute('data-links') || '[]'); return Array.isArray(v) ? v : []; }
+    catch(e){ return []; }
+  }
+  function setLinks(li, links){
+    if(links.length) li.setAttribute('data-links', JSON.stringify(links));
+    else li.removeAttribute('data-links');
+    renderLinks(li);
+  }
+
+  function renderLinks(li){
+    var links = getLinks(li);
+    var wrap = li.querySelector(':scope > .linkicons');
+    if(wrap) wrap.remove();
+    if(!links.length) return;
+    wrap = document.createElement('span');
+    wrap.className = 'linkicons';
+    links.forEach(function(url){
+      var a = document.createElement('a');
+      a.className = 'linkarrow';
+      a.target = '_blank'; a.rel = 'noopener';
+      a.href = url; a.title = url;
+      a.textContent = '↗';
+      wrap.appendChild(a);
+    });
+    var chip = li.querySelector(':scope > .chip');
+    if(chip) chip.insertAdjacentElement('afterend', wrap);
+    else li.insertBefore(wrap, li.firstChild);
+  }
+
+  var openPop = null;
+  function closePop(){ if(openPop){ openPop.remove(); openPop = null; } }
+  document.addEventListener('click', function(e){
+    if(openPop && !openPop.contains(e.target) && !e.target.closest('.chip') &&
+       !e.target.closest('.linkbtn') && !e.target.closest('.itemmenu-btn')){
+      closePop();
+    }
+  });
+
+  function openLinkManager(li, anchorEl){
+    closePop();
+    var pop = document.createElement('div');
+    pop.className = 'linkpop';
+
+    function rebuild(){
+      pop.innerHTML = '';
+      var links = getLinks(li);
+      links.forEach(function(url, idx){
+        var row = document.createElement('div');
+        row.className = 'linkpop-row';
+        var a = document.createElement('a');
+        a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = url;
+        var rm = document.createElement('button');
+        rm.type = 'button'; rm.textContent = '✕';
+        rm.addEventListener('click', function(e){
+          e.stopPropagation();
+          var arr = getLinks(li); arr.splice(idx, 1); setLinks(li, arr); rebuild();
+        });
+        row.appendChild(a); row.appendChild(rm);
+        pop.appendChild(row);
+      });
+      var addRow = document.createElement('div');
+      addRow.className = 'addrow';
+      var input = document.createElement('input');
+      input.type = 'text'; input.placeholder = 'https://…';
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button'; addBtn.textContent = 'Add';
+      addBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var val = input.value.trim();
+        if(!val) return;
+        var arr = getLinks(li); arr.push(val); setLinks(li, arr);
+        input.value = '';
+        rebuild();
+      });
+      input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); addBtn.click(); } });
+      input.addEventListener('click', function(e){ e.stopPropagation(); });
+      addRow.appendChild(input); addRow.appendChild(addBtn);
+      pop.appendChild(addRow);
+    }
+    rebuild();
+
+    document.body.appendChild(pop);
+    var r = anchorEl.getBoundingClientRect();
+    pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
+    pop.style.left = (window.scrollX + r.left) + 'px';
+    openPop = pop;
+  }
+
+  // ---- photo ----
+  function renderPhoto(li){
+    var url = li.getAttribute('data-img') || '';
+    var existing = li.querySelector(':scope > .photoicon');
+    if(!url){
+      if(existing) existing.remove();
+      return;
+    }
+    if(!existing){
+      existing = document.createElement('span');
+      existing.className = 'photoicon';
+      existing.textContent = '📷';
+      var img = document.createElement('img');
+      img.className = 'photopreview';
+      existing.appendChild(img);
+      existing.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        if(window.confirm('Remove this photo?')){
+          li.removeAttribute('data-img');
+          renderPhoto(li);
+        }
+      });
+      var chip = li.querySelector(':scope > .chip');
+      if(chip) chip.insertAdjacentElement('afterend', existing);
+      else li.insertBefore(existing, li.firstChild);
+    }
+    existing.querySelector('img').src = url;
+  }
+
+  function pickImage(li){
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+    input.addEventListener('change', function(){
+      var file = input.files[0];
+      if(file){
+        var reader = new FileReader();
+        reader.onload = function(){
+          li.setAttribute('data-img', reader.result);
+          renderPhoto(li);
+        };
+        reader.readAsDataURL(file);
+      }
+      input.remove();
+    });
+    input.click();
+  }
+
+  // ---- tag picker ----
+  function openTagPicker(chip){
+    closePop();
+    var pop = document.createElement('div');
+    pop.className = 'tagpop';
+    TAGS.forEach(function(t){
+      var row = document.createElement('div');
+      row.className = 'tagpop-row';
+      var sw = document.createElement('span');
+      sw.className = 'tagpop-swatch';
+      sw.style.background = t.bg;
+      row.appendChild(sw);
+      row.appendChild(document.createTextNode(t.icon + ' ' + t.name));
+      row.addEventListener('click', function(){
+        applyTag(chip, t);
+        closePop();
+      });
+      pop.appendChild(row);
+    });
+    var hr = document.createElement('hr');
+    pop.appendChild(hr);
+    var newBtn = document.createElement('div');
+    newBtn.className = 'newbtn';
+    newBtn.textContent = '+ New tag';
+    pop.appendChild(newBtn);
+
+    var form = document.createElement('div');
+    form.className = 'formwrap';
+    form.style.display = 'none';
+    var iconInput = document.createElement('input');
+    iconInput.type = 'text'; iconInput.placeholder = 'Icon (emoji)'; iconInput.maxLength = 4;
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.placeholder = 'Name';
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color'; colorInput.value = '#d9663f';
+    var addBtn = document.createElement('button');
+    addBtn.className = 'addbtn'; addBtn.type = 'button'; addBtn.textContent = 'Add & apply';
+    form.appendChild(iconInput); form.appendChild(nameInput); form.appendChild(colorInput); form.appendChild(addBtn);
+    pop.appendChild(form);
+
+    newBtn.addEventListener('click', function(){
+      form.style.display = 'block';
+      newBtn.style.display = 'none';
+      iconInput.focus();
+    });
+    addBtn.addEventListener('click', function(){
+      var icon = iconInput.value.trim() || '🏷️';
+      var name = nameInput.value.trim() || 'Custom';
+      var bg = colorInput.value;
+      var fg = fgFor(bg);
+      var t = { icon: icon, name: name, bg: bg, fg: fg };
+      addTagIfNew(t);
+      applyTag(chip, t);
+      closePop();
+    });
+
+    document.body.appendChild(pop);
+    var r = chip.getBoundingClientRect();
+    pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
+    pop.style.left = (window.scrollX + r.left) + 'px';
+    openPop = pop;
+  }
+
+  function applyTag(chip, t){
+    chip.setAttribute('data-icon', t.icon);
+    chip.setAttribute('data-name', t.name);
+    chip.style.background = t.bg;
+    chip.style.color = t.fg;
+    chip.textContent = t.icon + ' ' + t.name;
+  }
+
+  function mkBtn(label, fn){
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    b.addEventListener('click', function(e){ e.stopPropagation(); fn(); });
+    return b;
+  }
+
+  function openItemMenu(li, anchorEl){
+    closePop();
+    var pop = document.createElement('div');
+    pop.className = 'itemmenu';
+
+    function row(label, fn, danger){
+      var r = document.createElement('div');
+      r.className = 'itemmenu-row' + (danger ? ' danger' : '');
+      r.textContent = label;
+      r.addEventListener('click', function(e){
+        e.stopPropagation();
+        closePop();
+        fn();
+      });
+      pop.appendChild(r);
+      return r;
+    }
+
+    row('↑  Move up', function(){
+      var prev = li.previousElementSibling;
+      if(prev) li.parentNode.insertBefore(li, prev);
+    });
+    row('↓  Move down', function(){
+      var next = li.nextElementSibling;
+      if(next) li.parentNode.insertBefore(next, li);
+    });
+    row('↗  Links', function(){ openLinkManager(li, anchorEl); });
+    row('📷  Photo', function(){ pickImage(li); });
+    row('✕  Delete activity', function(){
+      var cell = li.closest('.cell');
+      li.remove();
+      recomputeCell(cell);
+    }, true);
+
+    document.body.appendChild(pop);
+    var r = anchorEl.getBoundingClientRect();
+    pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
+    pop.style.left = (window.scrollX + r.left) + 'px';
+    openPop = pop;
+  }
+
+  function attachItemControls(li){
+    if(li.querySelector(':scope > .itemctl')) return;
+    var ctl = document.createElement('span');
+    ctl.className = 'itemctl jsctl';
+
+    var menuBtn = mkBtn('⋯', function(){ openItemMenu(li, menuBtn); });
+    menuBtn.className = 'itemmenu-btn';
+    ctl.appendChild(menuBtn);
+    li.insertBefore(ctl, li.firstChild);
+
+    var chip = li.querySelector('.chip');
+    if(chip){
+      chip.style.cursor = 'pointer';
+      chip.addEventListener('click', function(e){
+        e.stopPropagation();
+        openTagPicker(chip);
+      });
+    }
+    li.querySelectorAll('.title, .line, .price-val, .price-note').forEach(makeEditable);
+    renderLinks(li);
+    renderPhoto(li);
+  }
+
+  function newActivityLi(){
+    var li = document.createElement('li');
+    var t = TAGS[0] || { icon: '🏷️', name: 'Custom', bg: '#e8e3d5', fg: '#3a3a46' };
+    var chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.setAttribute('data-icon', t.icon);
+    chip.setAttribute('data-name', t.name);
+    chip.style.background = t.bg;
+    chip.style.color = t.fg;
+    chip.textContent = t.icon + ' ' + t.name;
+
+    var title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = 'New activity';
+
+    var line = document.createElement('span');
+    line.className = 'line';
+    line.textContent = '🕒 time';
+
+    var price = document.createElement('span');
+    price.className = 'price';
+    var priceVal = document.createElement('span');
+    priceVal.className = 'price-val';
+    priceVal.textContent = '€0';
+    price.appendChild(priceVal);
+
+    li.appendChild(chip); li.appendChild(title); li.appendChild(line); li.appendChild(price);
+    return li;
+  }
+
+  function attachCellControls(cell){
+    if(cell.classList.contains('empty')) return;
+    if(cell.querySelector(':scope > .addact')) return;
+
+    var addBtn = document.createElement('button');
+    addBtn.type = 'button'; addBtn.className = 'addact jsctl';
+    addBtn.textContent = '+ Add activity';
+
+    var clearBtn = document.createElement('button');
+    clearBtn.type = 'button'; clearBtn.className = 'cleardaybtn jsctl';
+    clearBtn.textContent = '✕ clear day';
+
+    function refreshClear(){
+      var hasLoc = !!cell.querySelector(':scope > .loc');
+      clearBtn.classList.toggle('has-content', hasLoc);
+    }
+
+    addBtn.addEventListener('click', function(){
+      var loc = cell.querySelector(':scope > .loc');
+      var acts = cell.querySelector(':scope > .acts');
+      if(!loc){
+        loc = document.createElement('p');
+        loc.className = 'loc';
+        loc.textContent = 'New location';
+        makeEditable(loc);
+        cell.insertBefore(loc, addBtn);
+        cell.classList.add('active');
+      }
+      if(!acts){
+        acts = document.createElement('ul');
+        acts.className = 'acts';
+        cell.insertBefore(acts, addBtn);
+      }
+      var li = newActivityLi();
+      acts.appendChild(li);
+      attachItemControls(li);
+      recomputeCell(cell);
+      refreshHoliCell(cell);
+      refreshClear();
+    });
+
+    clearBtn.addEventListener('click', function(){
+      var loc = cell.querySelector(':scope > .loc');
+      var acts = cell.querySelector(':scope > .acts');
+      var cost = cell.querySelector(':scope > .cost');
+      if(loc) loc.remove();
+      if(acts) acts.remove();
+      if(cost) cost.remove();
+      cell.classList.remove('active');
+      recomputePanel(cell.closest('.panel'));
+      refreshHoliCell(cell);
+      refreshClear();
+    });
+
+    cell.appendChild(clearBtn);
+    cell.appendChild(addBtn);
+    refreshClear();
+  }
+
+  // ---- holiday banner: data-driven, draggable ends ----
+  function dayNumOfCell(cell){
+    var d = cell.querySelector('.daynum');
+    return d ? parseInt(d.textContent, 10) : null;
+  }
+
+  function refreshHoliCell(cell){
+    var panel = cell.closest('.panel');
+    if(!panel) return;
+    var start = parseInt(panel.dataset.holidayStart || '', 10);
+    var end = parseInt(panel.dataset.holidayEnd || '', 10);
+    var dn = dayNumOfCell(cell);
+    if(!start || !end || dn === null || dn < start || dn > end){
+      cell.classList.remove('holi');
+      return;
+    }
+    cell.classList.toggle('holi', !cell.querySelector(':scope > .loc'));
+  }
+
+  function lastDayOfCalendar(panel){
+    var days = [];
+    panel.querySelectorAll('.daynum').forEach(function(d){ days.push(parseInt(d.textContent, 10)); });
+    return Math.max.apply(null, days);
+  }
+
+  // Dragging is delta-based (days moved = mouse pixels moved / cell size),
+  // not "which cell is under the cursor right now". A spatial hit-test was
+  // tried first and broke exactly at the row boundary the handle sits on:
+  // the banner for the end-of-range handle sits just above the FOLLOWING
+  // week's row, so a shrink-drag (cursor barely moving, staying near the
+  // banner's own height) reads as "closer to the next row down" and jumps
+  // forward instead of back. Tracking movement relative to the drag's start
+  // point sidesteps that ambiguity — no vertical movement keeps you in the
+  // same week regardless of which row happens to be geometrically nearest.
+  var dragState = null;
+  function startDrag(e, panel, which){
+    e.preventDefault();
+    e.stopPropagation();
+    var sample = panel.querySelector('.cell:not(.empty)');
+    var cellRect = sample.getBoundingClientRect();
+    dragState = {
+      panel: panel, which: which,
+      startX: e.clientX, startY: e.clientY,
+      origValue: which === 'start' ? parseInt(panel.dataset.holidayStart, 10) : parseInt(panel.dataset.holidayEnd, 10),
+      cellWidth: cellRect.width,
+      cellHeight: cellRect.height
+    };
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+  }
+  function onDragMove(e){
+    if(!dragState) return;
+    var dx = e.clientX - dragState.startX;
+    var dy = e.clientY - dragState.startY;
+    var dayDelta = Math.round(dx / dragState.cellWidth) + Math.round(dy / dragState.cellHeight) * 7;
+    var panel = dragState.panel;
+    var maxDay = lastDayOfCalendar(panel);
+    var newDay = Math.max(1, Math.min(maxDay, dragState.origValue + dayDelta));
+    var start = parseInt(panel.dataset.holidayStart, 10);
+    var end = parseInt(panel.dataset.holidayEnd, 10);
+    if(dragState.which === 'start'){
+      if(newDay <= end && newDay !== start){ panel.dataset.holidayStart = String(newDay); renderHoliday(panel); }
+    } else {
+      if(newDay >= start && newDay !== end){ panel.dataset.holidayEnd = String(newDay); renderHoliday(panel); }
+    }
+  }
+  function onDragEnd(){
+    dragState = null;
+    document.removeEventListener('mousemove', onDragMove);
+    document.removeEventListener('mouseup', onDragEnd);
+  }
+
+  function nudgeHoliday(panel, which, delta){
+    var start = parseInt(panel.dataset.holidayStart, 10);
+    var end = parseInt(panel.dataset.holidayEnd, 10);
+    var maxDay = lastDayOfCalendar(panel);
+    if(which === 'start'){
+      var ns = start + delta;
+      if(ns < 1 || ns > end) return;
+      panel.dataset.holidayStart = String(ns);
+    } else {
+      var ne = end + delta;
+      if(ne > maxDay || ne < start) return;
+      panel.dataset.holidayEnd = String(ne);
+    }
+    renderHoliday(panel);
+  }
+
+  function renderHoliday(panel){
+    var start = parseInt(panel.dataset.holidayStart || '', 10);
+    var end = parseInt(panel.dataset.holidayEnd || '', 10);
+    panel.querySelectorAll(':scope > .grid.banner-row').forEach(function(n){ n.remove(); });
+    panel.querySelectorAll('.cell.holi').forEach(function(c){ c.classList.remove('holi'); });
+    if(!start || !end || end < start) return;
+    var weeks = Array.prototype.slice.call(panel.querySelectorAll(':scope > .grid.week'));
+    weeks.forEach(function(weekRow){
+      var cells = Array.prototype.slice.call(weekRow.children);
+      var firstCol = null, lastCol = null, containsStart = false, containsEnd = false;
+      cells.forEach(function(cell, idx){
+        var dn = dayNumOfCell(cell);
+        if(dn === null) return;
+        if(dn >= start && dn <= end){
+          if(firstCol === null) firstCol = idx + 1;
+          lastCol = idx + 1;
+          if(dn === start) containsStart = true;
+          if(dn === end) containsEnd = true;
+          if(!cell.querySelector(':scope > .loc')) cell.classList.add('holi');
+        }
+      });
+      if(firstCol === null) return;
+      var bannerRow = document.createElement('div');
+      bannerRow.className = 'grid banner-row';
+      var banner = document.createElement('div');
+      banner.className = 'banner';
+      banner.style.gridColumn = firstCol + ' / ' + (lastCol + 1);
+      banner.textContent = 'Holiday — time off · Aug ' + start + '–' + end;
+      if(containsStart){
+        var nudgeL = document.createElement('button');
+        nudgeL.type = 'button'; nudgeL.className = 'holi-nudge holi-nudge-left jsctl'; nudgeL.textContent = '◀';
+        nudgeL.title = 'Start one day earlier';
+        nudgeL.addEventListener('click', function(e){ e.stopPropagation(); nudgeHoliday(panel, 'start', -1); });
+        banner.appendChild(nudgeL);
+
+        var hl = document.createElement('span');
+        hl.className = 'handle handle-left jsctl';
+        hl.title = 'Drag to change the start day';
+        hl.addEventListener('mousedown', function(e){ startDrag(e, panel, 'start'); });
+        banner.appendChild(hl);
+      }
+      if(containsEnd){
+        var hrr = document.createElement('span');
+        hrr.className = 'handle handle-right jsctl';
+        hrr.title = 'Drag to change the end day';
+        hrr.addEventListener('mousedown', function(e){ startDrag(e, panel, 'end'); });
+        banner.appendChild(hrr);
+
+        var nudgeR = document.createElement('button');
+        nudgeR.type = 'button'; nudgeR.className = 'holi-nudge holi-nudge-right jsctl'; nudgeR.textContent = '▶';
+        nudgeR.title = 'End one day later';
+        nudgeR.addEventListener('click', function(e){ e.stopPropagation(); nudgeHoliday(panel, 'end', 1); });
+        banner.appendChild(nudgeR);
+      }
+      bannerRow.appendChild(banner);
+      panel.insertBefore(bannerRow, weekRow);
+    });
+  }
+
+  // ---- add / rename / remove options ----
+  function wirePill(pill){
+    var nameEl = pill.querySelector('.pill-name');
+    if(nameEl) makeEditable(nameEl);
+  }
+
+  document.querySelectorAll('.pill[data-opt]').forEach(wirePill);
+
+  document.addEventListener('input', function(e){
+    if(e.target.classList && e.target.classList.contains('pill-name')){
+      var pill = e.target.closest('.pill');
+      var pills = Array.prototype.slice.call(document.querySelectorAll('.pill[data-opt]'));
+      var idx = pills.indexOf(pill);
+      var budgetItems = document.querySelectorAll('.budget li');
+      if(budgetItems[idx]){
+        var bn = budgetItems[idx].querySelector('.budget-name');
+        if(bn) bn.textContent = e.target.textContent;
+      }
+    }
+  });
+
+  var addOptionBtn = document.getElementById('addOptionBtn');
+  if(addOptionBtn){
+    addOptionBtn.addEventListener('click', function(){
+      var panels = document.querySelectorAll('.panel');
+      var n = panels.length + 1;
+      var template = panels[0];
+      var clone = template.cloneNode(true);
+      clone.id = 'panel-option-' + n;
+      clone.classList.remove('on');
+      clone.removeAttribute('data-holiday-start');
+      clone.removeAttribute('data-holiday-end');
+      clone.querySelectorAll('.jsctl').forEach(function(n){ n.remove(); });
+      clone.querySelectorAll('.tagpop, .linkpop').forEach(function(n){ n.remove(); });
+      clone.querySelectorAll('.loc, .acts, .cost').forEach(function(n){ n.remove(); });
+      clone.querySelectorAll('.cell').forEach(function(c){ c.classList.remove('active', 'holi'); });
+      clone.querySelectorAll(':scope > .grid.banner-row').forEach(function(n){ n.remove(); });
+      var allPanels = document.querySelectorAll('.panel');
+      allPanels[allPanels.length - 1].insertAdjacentElement('afterend', clone);
+
+      var pillsWrap = document.querySelector('.pills');
+      var newPill = document.createElement('button');
+      newPill.type = 'button'; newPill.className = 'pill';
+      newPill.setAttribute('data-opt', 'option-' + n);
+      newPill.innerHTML = '<span class="pill-name">' + n + '. New option</span> <span class="pill-price">€0</span>' +
+        '<span class="pill-remove" title="Remove option">&times;</span>';
+      pillsWrap.insertBefore(newPill, addOptionBtn);
+      wirePill(newPill);
+
+      var budgetList = document.querySelector('.budget ul');
+      var li = document.createElement('li');
+      li.innerHTML = '<span><span class="budget-name">' + n + '. New option</span></span><strong>€0</strong>';
+      budgetList.appendChild(li);
+
+      clone.querySelectorAll('.acts li').forEach(attachItemControls);
+      clone.querySelectorAll('.grid .cell').forEach(attachCellControls);
+    });
+  }
+
+  document.addEventListener('click', function(e){
+    var rm = e.target.closest('.pill-remove');
+    if(!rm) return;
+    var pill = rm.closest('.pill');
+    var pills = document.querySelectorAll('.pill[data-opt]');
+    if(pills.length <= 1) return;
+    var idx = Array.prototype.indexOf.call(pills, pill);
+    var opt = pill.getAttribute('data-opt');
+    var panel = document.getElementById('panel-' + opt);
+    var wasOn = pill.classList.contains('on');
+    pill.remove();
+    if(panel) panel.remove();
+    var budgetItems = document.querySelectorAll('.budget li');
+    if(budgetItems[idx]) budgetItems[idx].remove();
+    if(wasOn){
+      var firstPill = document.querySelector('.pill[data-opt]');
+      if(firstPill){
+        firstPill.classList.add('on');
+        var firstPanel = document.getElementById('panel-' + firstPill.getAttribute('data-opt'));
+        if(firstPanel) firstPanel.classList.add('on');
+      }
+    }
+  });
+
+  // ---- initial attach ----
+  document.querySelectorAll(EDITABLE_SEL).forEach(makeEditable);
+  document.querySelectorAll('.acts li').forEach(attachItemControls);
+  document.querySelectorAll('.grid .cell').forEach(attachCellControls);
+  document.querySelectorAll('.panel').forEach(renderHoliday);
+
+  document.addEventListener('input', function(e){
+    if(e.target.classList && e.target.classList.contains('price-val')){
+      var cell = e.target.closest('.cell');
+      if(cell) recomputeCell(cell);
+    }
+  });
+
+  // ---- save: cached file handle + manual button + debounced autosave ----
+  var saveBtn = document.getElementById('saveBtn');
+  var statusEl = document.getElementById('saveStatus');
+  var changeFileBtn = document.getElementById('changeFileBtn');
+
+  var IS_HOSTED = location.protocol === 'http:' || location.protocol === 'https:';
+  var LS_KEY = 'travelPlanHtml_v1';
+
+  var SAVE_EXCLUDE_SEL = '.icontoolbar, .tagpop, .linkpop, #tagData';
+
+  function buildSaveHtml(){
+    persistTags();
+    var clone = document.documentElement.cloneNode(true);
+    clone.querySelectorAll('.jsctl').forEach(function(n){ n.remove(); });
+    clone.querySelectorAll('.tagpop, .linkpop').forEach(function(n){ n.remove(); });
+    clone.querySelectorAll(EDITABLE_SEL).forEach(function(el){ el.removeAttribute('contenteditable'); });
+    var st = clone.querySelector('#saveStatus');
+    if(st) st.textContent = '';
+    return '<!doctype html>\n' + clone.outerHTML;
+  }
+
+  function downloadCopy(htmlStr){
+    var blob = new Blob([htmlStr], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'travel-plan-august-2026.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  var DB_NAME = 'travelPlanEditor';
+  var STORE_NAME = 'handles';
+  var HANDLE_KEY = 'fileHandle';
+  var cachedHandle = null;
+
+  function idbOpen(){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore(STORE_NAME); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  async function idbGetHandle(){
+    try{
+      var db = await idbOpen();
+      return await new Promise(function(resolve){
+        var tx = db.transaction(STORE_NAME, 'readonly');
+        var req = tx.objectStore(STORE_NAME).get(HANDLE_KEY);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ resolve(null); };
+      });
+    } catch(e){ return null; }
+  }
+  async function idbSetHandle(handle){
+    try{
+      var db = await idbOpen();
+      return await new Promise(function(resolve){
+        var tx = db.transaction(STORE_NAME, 'readwrite');
+        if(handle) tx.objectStore(STORE_NAME).put(handle, HANDLE_KEY);
+        else tx.objectStore(STORE_NAME).delete(HANDLE_KEY);
+        tx.oncomplete = function(){ resolve(true); };
+        tx.onerror = function(){ resolve(false); };
+      });
+    } catch(e){ return false; }
+  }
+
+  function refreshChangeFileBtn(){
+    if(changeFileBtn) changeFileBtn.style.display = cachedHandle ? 'inline' : 'none';
+  }
+
+  async function writeWithHandle(handle, htmlStr){
+    var perm = await handle.queryPermission({ mode: 'readwrite' });
+    if(perm !== 'granted') perm = await handle.requestPermission({ mode: 'readwrite' });
+    if(perm !== 'granted') return false;
+    var writable = await handle.createWritable();
+    await writable.write(htmlStr);
+    await writable.close();
+    return true;
+  }
+
+  function setStatus(text, autoClear){
+    if(!statusEl) return;
+    statusEl.textContent = text;
+    if(autoClear){
+      setTimeout(function(){ if(statusEl.textContent === text) statusEl.textContent = ''; }, 2500);
+    }
+  }
+
+  function saveToLocalStorage(htmlStr){
+    try{ localStorage.setItem(LS_KEY, htmlStr); return true; }
+    catch(err){ return false; }
+  }
+
+  async function doSave(){
+    var htmlStr = buildSaveHtml();
+
+    if(IS_HOSTED){
+      var ok = saveToLocalStorage(htmlStr);
+      downloadCopy(htmlStr);
+      setStatus(ok ? 'Saved locally + downloaded ✓' : 'Downloaded (local storage full) ✓', true);
+      return;
+    }
+
+    var wroteDirect = false;
+    var mode = '';
+
+    if(!cachedHandle) cachedHandle = await idbGetHandle();
+
+    if(cachedHandle){
+      try{
+        wroteDirect = await writeWithHandle(cachedHandle, htmlStr);
+        if(wroteDirect) mode = 'file';
+      } catch(err){ wroteDirect = false; }
+      if(!wroteDirect){ cachedHandle = null; await idbSetHandle(null); }
+    }
+
+    if(!wroteDirect && window.showSaveFilePicker){
+      try{
+        var handle = await window.showSaveFilePicker({
+          suggestedName: 'travel-plan-august-2026.html',
+          types: [{ description: 'HTML file', accept: { 'text/html': ['.html'] } }]
+        });
+        wroteDirect = await writeWithHandle(handle, htmlStr);
+        if(wroteDirect){
+          cachedHandle = handle;
+          await idbSetHandle(handle);
+          mode = 'file';
+        }
+      } catch(err){
+        if(err && err.name === 'AbortError'){ return; }
+        wroteDirect = false;
+      }
+    }
+
+    if(!wroteDirect){
+      downloadCopy(htmlStr);
+      mode = 'download';
+    }
+
+    refreshChangeFileBtn();
+    setStatus(mode === 'file' ? 'Saved ✓' : 'Downloaded a new copy ✓', true);
+  }
+
+  async function triggerAutoSave(){
+    var htmlStr = buildSaveHtml();
+
+    if(IS_HOSTED){
+      var ok = saveToLocalStorage(htmlStr);
+      setStatus(ok ? 'Saved ✓' : 'Autosave failed — storage full', ok);
+      return;
+    }
+
+    if(!cachedHandle) cachedHandle = await idbGetHandle();
+    if(!cachedHandle){
+      setStatus('Click 💾 once to enable autosave');
+      return;
+    }
+    try{
+      var ok2 = await writeWithHandle(cachedHandle, htmlStr);
+      if(ok2){ setStatus('Saved ✓', true); }
+      else { cachedHandle = null; await idbSetHandle(null); refreshChangeFileBtn(); setStatus('Click 💾 once to enable autosave'); }
+    } catch(err){
+      cachedHandle = null; await idbSetHandle(null); refreshChangeFileBtn();
+      setStatus('Click 💾 once to enable autosave');
+    }
+  }
+
+  var autoSaveTimer = null;
+  function scheduleAutoSave(){
+    setStatus('Editing…');
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(triggerAutoSave, IS_HOSTED ? 400 : 900);
+  }
+
+  saveBtn.addEventListener('click', function(){ doSave(); });
+  saveBtn.title = IS_HOSTED ? 'Download a copy of the current plan' : 'Save';
+  if(changeFileBtn){
+    if(IS_HOSTED){
+      changeFileBtn.style.display = 'none';
+    } else {
+      changeFileBtn.addEventListener('click', async function(){
+        cachedHandle = null;
+        await idbSetHandle(null);
+        refreshChangeFileBtn();
+        setStatus('Next save will ask where to save', true);
+      });
+    }
+  }
+
+  var mo = new MutationObserver(function(mutations){
+    var relevant = mutations.some(function(m){
+      var node = m.target;
+      if(node.nodeType === 3) node = node.parentElement;
+      return node && !node.closest(SAVE_EXCLUDE_SEL);
+    });
+    if(relevant) scheduleAutoSave();
+  });
+  mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true,
+    attributeFilter: ['style', 'class', 'data-links', 'data-img', 'href', 'src', 'data-holiday-start', 'data-holiday-end', 'data-icon', 'data-name'] });
+
+  if(!IS_HOSTED){
+    (async function initHandle(){
+      cachedHandle = await idbGetHandle();
+      refreshChangeFileBtn();
+    })();
+  }
+})();
+</script>
+</body>
+</html>
