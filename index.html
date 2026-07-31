@@ -83,7 +83,8 @@
   .save-status.changelink { text-decoration:underline; cursor:pointer; }
 
   .pills { position:relative; }
-  .pill { position:relative; display:inline-flex; align-items:center; gap:6px; }
+  .pill { position:relative; display:inline-flex; align-items:center; gap:6px; cursor:grab; touch-action:none; }
+  .pill.dragging { opacity:.55; cursor:grabbing; }
   .pill-name { outline:none; }
   .pill-remove { display:none; font-size:13px; line-height:1; opacity:.75; padding:0 2px; border-radius:4px; }
   .pill-remove:hover { opacity:1; background:rgba(0,0,0,.12); }
@@ -143,12 +144,6 @@
   .handle:hover { opacity:1; }
   .handle-left { left:1px; }
   .handle-right { right:1px; }
-  .holi-nudge { position:absolute; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:50%;
-    border:1px solid var(--secondary); background:#fff; color:var(--secondary); font-size:9px; line-height:16px;
-    padding:0; cursor:pointer; z-index:5; box-shadow:0 1px 3px rgba(0,0,0,.15); }
-  .holi-nudge:hover { background:var(--secondary); color:#fff; }
-  .holi-nudge-left { left:-22px; }
-  .holi-nudge-right { right:-22px; }
   .banner-label { cursor:text; border-radius:3px; }
   .banner-label:hover { background:rgba(255,255,255,.35); }
   .banner-label:focus { outline:1px solid rgba(255,255,255,.8); background:rgba(255,255,255,.4); }
@@ -438,7 +433,7 @@
   </section>
   <h2>Budget overview</h2>
   <div class="budget">
-    <ul><li><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>€997</strong></li><li><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>€786</strong></li><li><span><span class="budget-name">3. Bratislava</span></span><strong>€135</strong></li></ul>
+    <ul><li data-opt="option-1"><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>€997</strong></li><li data-opt="option-2"><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>€786</strong></li><li data-opt="option-3"><span><span class="budget-name">3. Bratislava</span></span><strong>€135</strong></li></ul>
     <p class="fine">Estimates per person: trains, festival tickets, thermal bath, accommodation and the flight. Food and drinks not included.</p>
   </div>
   <footer>Travel plan · August 2026</footer>
@@ -497,7 +492,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-07-31-holiday-editable-mobile-list';
+  var BUILD_ID = 'build-2026-07-31-pill-reorder-holiday-flex';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -561,6 +556,7 @@
 
   // ---- pill / panel switching (event delegation so new pills just work) ----
   document.querySelector('.pills').addEventListener('click', function(e){
+    if(suppressNextPillClick){ suppressNextPillClick = false; return; }
     var btn = e.target.closest('.pill');
     if(!btn || btn.id === 'addOptionBtn') return;
     if(e.target.closest('.pill-remove') || e.target.closest('.pill-name')) return;
@@ -598,21 +594,25 @@
     recomputePanel(cell.closest('.panel'));
   }
 
+  // Matched by data-opt (not DOM position) everywhere, so pills, panels, and
+  // budget rows stay correctly linked no matter what order the pills are
+  // dragged into — see the pill reordering code below.
+  function optOf(panel){ return panel.id.replace(/^panel-/, ''); }
+
   function recomputePanel(panel){
     if(!panel) return;
     var sum = 0;
     panel.querySelectorAll('.cost').forEach(function(c){ sum += parseMoney(c.textContent); });
 
-    var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
-    var idx = panels.indexOf(panel);
-    var pills = document.querySelectorAll('.pill[data-opt]');
-    if(pills[idx]){
-      var priceSpan = pills[idx].querySelector('.pill-price');
+    var opt = optOf(panel);
+    var pill = document.querySelector('.pill[data-opt="' + opt + '"]');
+    if(pill){
+      var priceSpan = pill.querySelector('.pill-price');
       if(priceSpan) priceSpan.textContent = formatMoney(sum);
     }
-    var budgetItems = document.querySelectorAll('.budget li');
-    if(budgetItems[idx]){
-      var strong = budgetItems[idx].querySelector('strong');
+    var budgetLi = document.querySelector('.budget li[data-opt="' + opt + '"]');
+    if(budgetLi){
+      var strong = budgetLi.querySelector('strong');
       if(strong) strong.textContent = formatMoney(sum);
     }
   }
@@ -1066,26 +1066,17 @@
     document.removeEventListener('pointercancel', onDragEnd);
   }
 
-  function nudgeHoliday(panel, which, delta){
-    var start = parseInt(panel.dataset.holidayStart, 10);
-    var end = parseInt(panel.dataset.holidayEnd, 10);
-    var maxDay = lastDayOfCalendar(panel);
-    if(which === 'start'){
-      var ns = start + delta;
-      if(ns < 1 || ns > end) return;
-      panel.dataset.holidayStart = String(ns);
-    } else {
-      var ne = end + delta;
-      if(ne > maxDay || ne < start) return;
-      panel.dataset.holidayEnd = String(ne);
-    }
-    renderHoliday(panel);
-  }
-
   function addHolidayToPanel(panel){
     var maxDay = lastDayOfCalendar(panel);
-    panel.dataset.holidayStart = '1';
-    panel.dataset.holidayEnd = String(Math.min(3, maxDay));
+    var input = window.prompt('Holiday period — enter the start and end day of the month (e.g. 5-10):', '1-3');
+    if(input === null) return;
+    var m = input.match(/(\d+)\s*[-–]\s*(\d+)/);
+    if(!m){ window.alert('Enter two day numbers separated by a dash, e.g. 5-10'); return; }
+    var s = Math.max(1, Math.min(maxDay, parseInt(m[1], 10)));
+    var e = Math.max(1, Math.min(maxDay, parseInt(m[2], 10)));
+    if(e < s){ var tmp = s; s = e; e = tmp; }
+    panel.dataset.holidayStart = String(s);
+    panel.dataset.holidayEnd = String(e);
     if(!panel.dataset.holidayLabel) panel.dataset.holidayLabel = 'Holiday — time off';
     renderHoliday(panel);
   }
@@ -1148,12 +1139,6 @@
       banner.appendChild(document.createTextNode(' · Aug ' + start + '–' + end));
 
       if(containsStart){
-        var nudgeL = document.createElement('button');
-        nudgeL.type = 'button'; nudgeL.className = 'holi-nudge holi-nudge-left jsctl'; nudgeL.textContent = '◀';
-        nudgeL.title = 'Start one day earlier';
-        nudgeL.addEventListener('click', function(e){ e.stopPropagation(); nudgeHoliday(panel, 'start', -1); });
-        banner.appendChild(nudgeL);
-
         var hl = document.createElement('span');
         hl.className = 'handle handle-left jsctl';
         hl.title = 'Drag to change the start day';
@@ -1168,12 +1153,6 @@
         hrr.style.touchAction = 'none';
         hrr.addEventListener('pointerdown', function(e){ startDrag(e, panel, 'end'); });
         banner.appendChild(hrr);
-
-        var nudgeR = document.createElement('button');
-        nudgeR.type = 'button'; nudgeR.className = 'holi-nudge holi-nudge-right jsctl'; nudgeR.textContent = '▶';
-        nudgeR.title = 'End one day later';
-        nudgeR.addEventListener('click', function(e){ e.stopPropagation(); nudgeHoliday(panel, 'end', 1); });
-        banner.appendChild(nudgeR);
       }
       bannerRow.appendChild(banner);
       panel.insertBefore(bannerRow, weekRow);
@@ -1191,15 +1170,65 @@
   document.addEventListener('input', function(e){
     if(e.target.classList && e.target.classList.contains('pill-name')){
       var pill = e.target.closest('.pill');
-      var pills = Array.prototype.slice.call(document.querySelectorAll('.pill[data-opt]'));
-      var idx = pills.indexOf(pill);
-      var budgetItems = document.querySelectorAll('.budget li');
-      if(budgetItems[idx]){
-        var bn = budgetItems[idx].querySelector('.budget-name');
+      var opt = pill.getAttribute('data-opt');
+      var budgetLi = document.querySelector('.budget li[data-opt="' + opt + '"]');
+      if(budgetLi){
+        var bn = budgetLi.querySelector('.budget-name');
         if(bn) bn.textContent = e.target.textContent;
       }
     }
   });
+
+  // ---- drag to reorder options (pills, panels stay linked by data-opt so
+  // reordering the pills alone is safe; the budget-overview rows are moved
+  // along with them so the whole UI stays visually consistent) ----
+  var pillDrag = null;
+  var suppressNextPillClick = false;
+  document.querySelector('.pills').addEventListener('pointerdown', function(e){
+    var pill = e.target.closest('.pill[data-opt]');
+    if(!pill) return;
+    if(e.target.closest('.pill-name') || e.target.closest('.pill-remove')) return;
+    pillDrag = { pill: pill, startX: e.clientX, startY: e.clientY, moved: false };
+    document.addEventListener('pointermove', onPillDragMove);
+    document.addEventListener('pointerup', onPillDragEnd);
+    document.addEventListener('pointercancel', onPillDragEnd);
+  });
+  function onPillDragMove(e){
+    if(!pillDrag) return;
+    var dx = e.clientX - pillDrag.startX, dy = e.clientY - pillDrag.startY;
+    if(!pillDrag.moved && Math.sqrt(dx * dx + dy * dy) > 6){
+      pillDrag.moved = true;
+      pillDrag.pill.classList.add('dragging');
+    }
+    if(!pillDrag.moved) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var target = el ? el.closest('.pill[data-opt]') : null;
+    if(target && target !== pillDrag.pill){
+      var pillsWrap = document.querySelector('.pills');
+      var all = Array.prototype.slice.call(pillsWrap.querySelectorAll('.pill[data-opt]'));
+      var fromIdx = all.indexOf(pillDrag.pill), toIdx = all.indexOf(target);
+      if(fromIdx < toIdx) target.insertAdjacentElement('afterend', pillDrag.pill);
+      else target.insertAdjacentElement('beforebegin', pillDrag.pill);
+
+      var budgetList = document.querySelector('.budget ul');
+      var draggedLi = budgetList.querySelector('li[data-opt="' + pillDrag.pill.getAttribute('data-opt') + '"]');
+      var targetLi = budgetList.querySelector('li[data-opt="' + target.getAttribute('data-opt') + '"]');
+      if(draggedLi && targetLi){
+        if(fromIdx < toIdx) targetLi.insertAdjacentElement('afterend', draggedLi);
+        else targetLi.insertAdjacentElement('beforebegin', draggedLi);
+      }
+    }
+  }
+  function onPillDragEnd(){
+    if(pillDrag){
+      pillDrag.pill.classList.remove('dragging');
+      if(pillDrag.moved) suppressNextPillClick = true;
+    }
+    pillDrag = null;
+    document.removeEventListener('pointermove', onPillDragMove);
+    document.removeEventListener('pointerup', onPillDragEnd);
+    document.removeEventListener('pointercancel', onPillDragEnd);
+  }
 
   var addOptionBtn = document.getElementById('addOptionBtn');
   if(addOptionBtn){
@@ -1231,6 +1260,7 @@
 
       var budgetList = document.querySelector('.budget ul');
       var li = document.createElement('li');
+      li.setAttribute('data-opt', 'option-' + n);
       li.innerHTML = '<span><span class="budget-name">' + n + '. New option</span></span><strong>€0</strong>';
       budgetList.appendChild(li);
 
@@ -1246,14 +1276,13 @@
     var pill = rm.closest('.pill');
     var pills = document.querySelectorAll('.pill[data-opt]');
     if(pills.length <= 1) return;
-    var idx = Array.prototype.indexOf.call(pills, pill);
     var opt = pill.getAttribute('data-opt');
     var panel = document.getElementById('panel-' + opt);
     var wasOn = pill.classList.contains('on');
     pill.remove();
     if(panel) panel.remove();
-    var budgetItems = document.querySelectorAll('.budget li');
-    if(budgetItems[idx]) budgetItems[idx].remove();
+    var budgetLi = document.querySelector('.budget li[data-opt="' + opt + '"]');
+    if(budgetLi) budgetLi.remove();
     if(wasOn){
       var firstPill = document.querySelector('.pill[data-opt]');
       if(firstPill){
