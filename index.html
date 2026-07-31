@@ -150,10 +150,10 @@
   .banner-remove { border:none; background:rgba(255,255,255,.4); color:var(--secondary); border-radius:50%;
     width:14px; height:14px; font-size:8px; line-height:14px; padding:0; cursor:pointer; vertical-align:middle; }
   .banner-remove:hover { background:#fff; }
-  .addholiday { display:block; width:100%; margin-bottom:6px; border:1px dashed var(--secondary); background:transparent;
-    color:var(--secondary); border-radius:999px; padding:6px; font-size:11px; font-weight:700; cursor:pointer;
-    text-transform:uppercase; letter-spacing:.06em; }
-  .addholiday:hover { background:rgba(var(--secondary-rgb),.08); }
+  .addholiday { display:inline-block; width:auto; margin:0 0 8px; border:1px dashed var(--secondary); background:transparent;
+    color:var(--secondary); border-radius:999px; padding:3px 10px; font-size:10px; font-weight:700; cursor:pointer;
+    text-transform:uppercase; letter-spacing:.04em; opacity:.75; }
+  .addholiday:hover { background:rgba(var(--secondary-rgb),.08); opacity:1; }
 
   .tagpop { display:block; position:absolute; z-index:50; background:var(--card); border:1px solid var(--line);
     border-radius:10px; padding:6px; box-shadow:0 10px 28px rgba(0,0,0,.18); font-size:13px; width:190px; }
@@ -495,7 +495,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-07-31-multi-holiday-periods';
+  var BUILD_ID = 'build-2026-07-31-compact-addholiday-btn';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
