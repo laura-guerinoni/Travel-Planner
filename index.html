@@ -15,7 +15,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Travel Plan — August 2026</title>
 <style>
-  :root { --bg:#fdece0; --card:#fffaf5; --ink:#3a2b25; --muted:#9c8073; --line:#f3d9c4; --primary:#d9663f; }
+  :root { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92; }
   * { box-sizing:border-box; }
   body { margin:0; padding:32px 16px 32px 56px; background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
@@ -38,12 +38,12 @@
   .heads { margin-bottom:8px; }
   .week { margin-bottom:8px; align-items:start; }
   .banner-row { margin-bottom:6px; }
-  .banner { background:rgba(217,102,63,.14); color:var(--primary); border:1px solid rgba(217,102,63,.35);
+  .banner { background:rgba(var(--secondary-rgb),.16); color:var(--secondary); border:1px solid rgba(var(--secondary-rgb),.4);
     border-radius:999px; padding:4px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
   .wdhead { text-align:center; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
   .cell { background:var(--card); border:1px solid var(--line); border-radius:12px; min-height:104px; padding:8px; }
   .cell.empty { background:transparent; border:none; min-height:0; }
-  .cell.holi { background:rgba(217,102,63,.08); border-color:rgba(217,102,63,.25); }
+  .cell.holi { background:rgba(var(--secondary-rgb),.08); border-color:rgba(var(--secondary-rgb),.28); }
   .cell.active { border-color:var(--primary); box-shadow:0 1px 3px rgba(0,0,0,.06); }
   .cellhead { display:flex; align-items:baseline; gap:6px; }
   .daynum { font-weight:700; font-size:15px; }
@@ -75,10 +75,10 @@
 
   .icontoolbar { position:fixed; top:14px; right:16px; z-index:70; display:flex; flex-direction:column;
     align-items:flex-end; gap:4px; }
-  .icon-btn { width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--card);
-    color:var(--ink); cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center;
-    padding:0; box-shadow:0 1px 3px rgba(0,0,0,.08); }
-  .icon-btn:hover { background:var(--bg); }
+  .icon-btn { width:34px; height:34px; border-radius:50%; border:none; background:var(--accent);
+    color:#fff; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center;
+    padding:0; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+  .icon-btn:hover { background:#e5893f; }
   .save-status { font-size:11px; color:var(--muted); text-align:right; max-width:160px; min-height:14px; }
   .save-status.changelink { text-decoration:underline; cursor:pointer; }
 
@@ -89,7 +89,8 @@
   .pill-remove:hover { opacity:1; background:rgba(0,0,0,.12); }
   .pill:hover .pill-remove { display:inline-block; }
   .pill.add { width:34px; height:34px; padding:0; border-radius:50%; display:inline-flex; align-items:center;
-    justify-content:center; font-weight:800; font-size:16px; }
+    justify-content:center; font-weight:800; font-size:16px; background:var(--secondary); border-color:var(--secondary);
+    color:#fff; }
 
   .budget-name { outline:none; }
 
@@ -143,9 +144,9 @@
   .handle-left { left:1px; }
   .handle-right { right:1px; }
   .holi-nudge { position:absolute; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:50%;
-    border:1px solid var(--primary); background:#fff; color:var(--primary); font-size:9px; line-height:16px;
+    border:1px solid var(--secondary); background:#fff; color:var(--secondary); font-size:9px; line-height:16px;
     padding:0; cursor:pointer; z-index:5; box-shadow:0 1px 3px rgba(0,0,0,.15); }
-  .holi-nudge:hover { background:var(--primary); color:#fff; }
+  .holi-nudge:hover { background:var(--secondary); color:#fff; }
   .holi-nudge-left { left:-22px; }
   .holi-nudge-right { right:-22px; }
 
@@ -180,6 +181,23 @@
     border-radius:6px; }
   .linkpop .addrow button { border:none; background:var(--primary); color:#fff; border-radius:6px; padding:0 8px;
     font:inherit; font-weight:700; cursor:pointer; }
+
+  /* ---- mobile: the 7-column month grid can't shrink to phone width without
+     becoming unreadable, so instead of cramming it, each panel scrolls
+     horizontally as one unit (all its rows — heads, weeks, holiday banners —
+     stay column-aligned since they share the same scroll container) while
+     cells keep their normal, legible size. ---- */
+  @media (max-width: 720px) {
+    body { padding: 16px 10px 16px 34px; }
+    .month-label { width: 26px; font-size: 11px; letter-spacing: .08em; }
+    .icontoolbar { top: 10px; right: 10px; }
+    .pills { gap: 6px; }
+    .pill { font-size: 13px; padding: 8px 12px; }
+    h1 { font-size: 26px; }
+    .panel.on { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px 4px; }
+    .panel.on .grid { grid-template-columns: repeat(7, 124px); width: max-content; }
+    .budget { overflow-x: visible; }
+  }
 </style>
 </head>
 <body>
@@ -187,228 +205,230 @@
 <div class="wrap">
   <header>
     <div class="pills">
-      <button class="pill on" data-opt="option-1" type="button"><span class="pill-name">1. Slovakia · Hungary · Poland</span> <span class="pill-price">&euro;997</span><span class="pill-remove" title="Remove option">&times;</span></button>
-      <button class="pill" data-opt="option-2" type="button"><span class="pill-name">2. Hungary · Poland</span> <span class="pill-price">&euro;786</span><span class="pill-remove" title="Remove option">&times;</span></button>
-      <button class="pill add" id="addOptionBtn" type="button" title="Add option">+</button>
+      <button class="pill" data-opt="option-1" type="button"><span class="pill-name">1. Slovakia · Hungary · Poland</span> <span class="pill-price">€997</span><span class="pill-remove" title="Remove option">×</span></button>
+      <button class="pill" data-opt="option-2" type="button"><span class="pill-name">2. Hungary · Poland</span> <span class="pill-price">€786</span><span class="pill-remove" title="Remove option">×</span></button>
+      <button type="button" class="pill on" data-opt="option-3"><span class="pill-name">3. Bratislava</span> <span class="pill-price">€135</span><span class="pill-remove" title="Remove option">×</span></button><button class="pill add" id="addOptionBtn" type="button" title="Add option">+</button>
     </div>
   </header>
   <div class="icontoolbar">
-    <button id="saveBtn" type="button" class="icon-btn" title="Save">💾</button>
+    <button id="saveBtn" type="button" class="icon-btn" title="Download a copy of the current plan">💾</button>
     <span id="saveStatus" class="save-status"></span>
     <span id="changeFileBtn" class="save-status changelink" style="display:none;">change save location</span>
   </div>
-  <section class="panel on" id="panel-option-1" data-holiday-start="12" data-holiday-end="25">
-    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column:3 / 8">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div><p class="loc">Košice → Budapest</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+  <section class="panel" id="panel-option-1" data-holiday-start="12" data-holiday-end="25">
+    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 3 / 8;">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div><p class="loc">Košice → Budapestt</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Košice → Budapest</span>
                 <span class="line">🕒 07:10 → 11:05 (~4h)</span>
                 <span class="line">Direct MÁV/ZSSK, cheaper booked online</span>
-                <span class="price"><span class="price-val">&euro;25</span> <em class="price-note">~22–30 € one way</em></span>
+                <span class="price"><span class="price-val">€25</span> <em class="price-note">~22–30 € one way</em></span>
               </li><li>
-                <span class="chip" data-icon="🌸" data-name="Festival" style="background:#d16aa8;color:#ffffff">🌸 Festival</span>
+                <span class="chip" data-icon="🌸" data-name="Festival" style="background: rgb(209, 106, 168); color: rgb(255, 255, 255); cursor: pointer;">🌸 Festival</span>
                 <span class="title">Sziget Festival — 1 day ticket</span>
                 <span class="line">🕒 Gates 12:00 → late night</span>
                 <span class="line">Hajógyári Island, one night on site</span>
-                <span class="price"><span class="price-val">&euro;116</span> <em class="price-note">Sziget 2026 (Aug 11–15) day pass €109 + fees</em></span>
+                <span class="price"><span class="price-val">€116</span> <em class="price-note">Sziget 2026 (Aug 11–15) day pass €109 + fees</em></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">One night in Budapest</span>
                 
                 <span class="line">Camping on the island or a city hostel</span>
-                <span class="price"><span class="price-val">&euro;45</span></span>
-              </li></ul><p class="cost">Day total &euro;186</p></div><div class="cell active"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div><p class="loc">Budapest → Košice</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€45</span></span>
+              </li></ul><p class="cost">Day total €186</p></div><div class="cell active"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div><p class="loc">Budapest → Košice</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train back to Košice</span>
                 <span class="line">🕒 16:35 → 20:30 (~4h)</span>
                 
-                <span class="price"><span class="price-val">&euro;25</span></span>
-              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell holi"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div><p class="loc">Košice → Miskolc</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€25</span></span>
+              </li></ul><p class="cost">Day total €25</p></div><div class="cell holi"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div><p class="loc">Košice → Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Košice → Miskolc</span>
                 <span class="line">🕒 09:20 → 11:00 (~1h40)</span>
                 <span class="line">MÁV/ZSSK regional, buy at the station</span>
-                <span class="price"><span class="price-val">&euro;12</span></span>
+                <span class="price"><span class="price-val">€12</span></span>
               </li><li>
-                <span class="chip" data-icon="♨️" data-name="Thermal" style="background:#c96a3f;color:#ffffff">♨️ Thermal</span>
+                <span class="chip" data-icon="♨️" data-name="Thermal" style="background: rgb(201, 106, 63); color: rgb(255, 255, 255); cursor: pointer;">♨️ Thermal</span>
                 <span class="title">Miskolctapolca Cave Bath</span>
                 <span class="line">🕒 13:00 → 18:00</span>
                 <span class="line">Thermal pools inside natural rock caves</span>
-                <span class="price"><span class="price-val">&euro;10</span> <em class="price-note">Adult entry ~4 000 HUF</em></span>
+                <span class="price"><span class="price-val">€10</span> <em class="price-note">Adult entry ~4 000 HUF</em></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Hotel in Miskolc (2 nights)</span>
                 
                 <span class="line">Mid-range 3★ double, per person per night</span>
-                <span class="price"><span class="price-val">&euro;90</span> <em class="price-note">2 nights × ~45 €</em></span>
-              </li></ul><p class="cost">Day total &euro;112</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 8">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div><p class="loc">Miskolc</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="price"><span class="price-val">€90</span> <em class="price-note">2 nights × ~45 €</em></span>
+              </li></ul><p class="cost">Day total €112</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 1 / 8;">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div><p class="loc">Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background: rgb(232, 227, 213); color: rgb(58, 58, 70); cursor: pointer;">🏛️ City</span>
                 <span class="title">Miskolc slow day</span>
                 <span class="line">🕒 All day</span>
                 <span class="line">Lillafüred, Diósgyőr castle, tram ride</span>
-                <span class="price"><span class="price-val">&euro;20</span> <em class="price-note">Tickets + local transport</em></span>
-              </li></ul><p class="cost">Day total &euro;20</p></div><div class="cell active"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div><p class="loc">Miskolc → Debrecen</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€20</span> <em class="price-note">Tickets + local transport</em></span>
+              </li></ul><p class="cost">Day total €20</p></div><div class="cell active"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div><p class="loc">Miskolc → Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Miskolc → Debrecen</span>
                 <span class="line">🕒 10:05 → 12:30 (~2h25)</span>
                 <span class="line">Change in Füzesabony or via Nyíregyháza</span>
-                <span class="price"><span class="price-val">&euro;11</span></span>
+                <span class="price"><span class="price-val">€11</span></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Hotel in Debrecen (2 nights)</span>
                 
                 <span class="line">Carnival week — book early, prices spike</span>
-                <span class="price"><span class="price-val">&euro;130</span> <em class="price-note">2 nights × ~65 €</em></span>
-              </li></ul><p class="cost">Day total &euro;141</p></div><div class="cell active"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div><p class="loc">Debrecen</p><ul class="acts"><li>
-                <span class="chip" data-icon="🌸" data-name="Festival" style="background:#d16aa8;color:#ffffff">🌸 Festival</span>
+                <span class="price"><span class="price-val">€130</span> <em class="price-note">2 nights × ~65 €</em></span>
+              </li></ul><p class="cost">Day total €141</p></div><div class="cell active"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div><p class="loc">Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🌸" data-name="Festival" style="background: rgb(209, 106, 168); color: rgb(255, 255, 255); cursor: pointer;">🌸 Festival</span>
                 <span class="title">Debrecen Flower Carnival</span>
                 <span class="line">🕒 09:00 parade → late night concerts</span>
                 <span class="line">Flower floats parade through the centre</span>
-                <span class="price"><span class="price-val">&euro;25</span> <em class="price-note">Grandstand seat / event pass</em></span>
-              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div><p class="loc">Debrecen → Kraków</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€25</span> <em class="price-note">Grandstand seat / event pass</em></span>
+              </li></ul><p class="cost">Day total €25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div><p class="loc">Debrecen → Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Debrecen → Kraków</span>
                 <span class="line">🕒 Full travel day (~9–11h, 1–2 changes)</span>
                 <span class="line">Via Budapest/Katowice or via Košice–Przemyśl</span>
-                <span class="price"><span class="price-val">&euro;45</span> <em class="price-note">Via Košice–Poprad–Kraków, ~9–12h</em></span>
+                <span class="price"><span class="price-val">€45</span> <em class="price-note">Via Košice–Poprad–Kraków, ~9–12h</em></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Kraków stay (2 nights)</span>
                 
                 
-                <span class="price"><span class="price-val">&euro;110</span> <em class="price-note">2 nights × ~55 €</em></span>
-              </li></ul><p class="cost">Day total &euro;155</p></div><div class="cell active"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div><p class="loc">Kraków</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="price"><span class="price-val">€110</span> <em class="price-note">2 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total €155</p></div><div class="cell active"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div><p class="loc">Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background: rgb(232, 227, 213); color: rgb(58, 58, 70); cursor: pointer;">🏛️ City</span>
                 <span class="title">Kraków full day</span>
                 <span class="line">🕒 All day</span>
                 <span class="line">Wawel, Kazimierz, Rynek Główny</span>
-                <span class="price"><span class="price-val">&euro;40</span> <em class="price-note">Entries + food extra</em></span>
-              </li></ul><p class="cost">Day total &euro;40</p></div><div class="cell active"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div><p class="loc">Kraków → Gdańsk</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€40</span> <em class="price-note">Entries + food extra</em></span>
+              </li></ul><p class="cost">Day total €40</p></div><div class="cell active"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div><p class="loc">Kraków → Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">PKP Intercity Kraków → Gdańsk</span>
                 <span class="line">🕒 08:40 → 14:40 (~6h)</span>
                 <span class="line">Book in advance for the cheap fare</span>
-                <span class="price"><span class="price-val">&euro;25</span></span>
+                <span class="price"><span class="price-val">€25</span></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Gdańsk stay (3 nights)</span>
                 
                 
-                <span class="price"><span class="price-val">&euro;165</span> <em class="price-note">3 nights × ~55 €</em></span>
-              </li></ul><p class="cost">Day total &euro;190</p></div><div class="cell active"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div><p class="loc">Gdańsk / Sopot</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏖️" data-name="Beach" style="background:#5fbcc0;color:#14213d">🏖️ Beach</span>
+                <span class="price"><span class="price-val">€165</span> <em class="price-note">3 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total €190</p></div><div class="cell active"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div><p class="loc">Gdańsk / Sopot</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏖️" data-name="Beach" style="background: rgb(95, 188, 192); color: rgb(20, 33, 61); cursor: pointer;">🏖️ Beach</span>
                 <span class="title">Cute beach day in Sopot</span>
                 <span class="line">🕒 SKM train 25 min, then all day</span>
                 <span class="line">Sopot pier + Jelitkowo sand</span>
-                <span class="price"><span class="price-val">&euro;8</span> <em class="price-note">SKM return + sunbed</em></span>
-              </li></ul><p class="cost">Day total &euro;8</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 3">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div><p class="loc">Gdańsk</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="price"><span class="price-val">€8</span> <em class="price-note">SKM return + sunbed</em></span>
+              </li></ul><p class="cost">Day total €8</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 1 / 3;">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div><p class="loc">Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background: rgb(232, 227, 213); color: rgb(58, 58, 70); cursor: pointer;">🏛️ City</span>
                 <span class="title">Gdańsk old town &amp; amber</span>
                 <span class="line">🕒 All day</span>
                 <span class="line">Motława river, Mariacka street, museums</span>
-                <span class="price"><span class="price-val">&euro;25</span></span>
-              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div><p class="loc">Gdańsk → Milan</p><ul class="acts"><li>
-                <span class="chip" data-icon="✈️" data-name="Flight" style="background:#7a6ec9;color:#ffffff">✈️ Flight</span>
+                <span class="price"><span class="price-val">€25</span></span>
+              </li></ul><p class="cost">Day total €25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div><p class="loc">Gdańsk → Milan</p><ul class="acts"><li>
+                <span class="chip" data-icon="✈️" data-name="Flight" style="background: rgb(122, 110, 201); color: rgb(255, 255, 255); cursor: pointer;">✈️ Flight</span>
                 <span class="title">Flight Gdańsk GDN → Milan (Wizz/Ryanair)</span>
                 <span class="line">🕒 Afternoon, ~2h15</span>
                 <span class="line">Trip ends — direct low-cost route</span>
-                <span class="price"><span class="price-val">&euro;70</span> <em class="price-note">One-way, hand luggage only</em></span>
-              </li></ul><p class="cost">Day total &euro;70</p></div><div class="cell"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
+                <span class="price"><span class="price-val">€70</span> <em class="price-note">One-way, hand luggage only</em></span>
+              </li></ul><p class="cost">Day total €70</p></div><div class="cell"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
   </section><section class="panel" id="panel-option-2" data-holiday-start="13" data-holiday-end="26">
-    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column:4 / 8">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div><p class="loc">Košice → Miskolc</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 4 / 8;">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div><p class="loc">Košice → Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Košice → Miskolc</span>
                 <span class="line">🕒 09:20 → 11:00 (~1h40)</span>
                 <span class="line">MÁV/ZSSK regional, buy at the station</span>
-                <span class="price"><span class="price-val">&euro;12</span></span>
+                <span class="price"><span class="price-val">€12</span></span>
               </li><li>
-                <span class="chip" data-icon="♨️" data-name="Thermal" style="background:#c96a3f;color:#ffffff">♨️ Thermal</span>
+                <span class="chip" data-icon="♨️" data-name="Thermal" style="background: rgb(201, 106, 63); color: rgb(255, 255, 255); cursor: pointer;">♨️ Thermal</span>
                 <span class="title">Miskolctapolca Cave Bath</span>
                 <span class="line">🕒 13:00 → 18:00</span>
                 <span class="line">Thermal pools inside natural rock caves</span>
-                <span class="price"><span class="price-val">&euro;10</span> <em class="price-note">Adult entry ~4 000 HUF</em></span>
+                <span class="price"><span class="price-val">€10</span> <em class="price-note">Adult entry ~4 000 HUF</em></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Hotel in Miskolc (2 nights)</span>
                 
                 <span class="line">Mid-range 3★ double, per person per night</span>
-                <span class="price"><span class="price-val">&euro;90</span> <em class="price-note">2 nights × ~45 €</em></span>
-              </li></ul><p class="cost">Day total &euro;112</p></div><div class="cell active"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div><p class="loc">Miskolc</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="price"><span class="price-val">€90</span> <em class="price-note">2 nights × ~45 €</em></span>
+              </li></ul><p class="cost">Day total €112</p></div><div class="cell active"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div><p class="loc">Miskolc</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background: rgb(232, 227, 213); color: rgb(58, 58, 70); cursor: pointer;">🏛️ City</span>
                 <span class="title">Miskolc slow day</span>
                 <span class="line">🕒 All day</span>
                 <span class="line">Lillafüred, Diósgyőr castle, tram ride</span>
-                <span class="price"><span class="price-val">&euro;20</span> <em class="price-note">Tickets + local transport</em></span>
-              </li></ul><p class="cost">Day total &euro;20</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 8">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div><p class="loc">Miskolc → Debrecen</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€20</span> <em class="price-note">Tickets + local transport</em></span>
+              </li></ul><p class="cost">Day total €20</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 1 / 8;">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div><p class="loc">Miskolc → Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Miskolc → Debrecen</span>
                 <span class="line">🕒 10:05 → 12:30 (~2h25)</span>
                 <span class="line">Change in Füzesabony or via Nyíregyháza</span>
-                <span class="price"><span class="price-val">&euro;11</span></span>
+                <span class="price"><span class="price-val">€11</span></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Hotel in Debrecen (2 nights)</span>
                 
                 <span class="line">Carnival week — book early, prices spike</span>
-                <span class="price"><span class="price-val">&euro;130</span> <em class="price-note">2 nights × ~65 €</em></span>
-              </li></ul><p class="cost">Day total &euro;141</p></div><div class="cell active"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div><p class="loc">Debrecen</p><ul class="acts"><li>
-                <span class="chip" data-icon="🌸" data-name="Festival" style="background:#d16aa8;color:#ffffff">🌸 Festival</span>
+                <span class="price"><span class="price-val">€130</span> <em class="price-note">2 nights × ~65 €</em></span>
+              </li></ul><p class="cost">Day total €141</p></div><div class="cell active"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div><p class="loc">Debrecen</p><ul class="acts"><li>
+                <span class="chip" data-icon="🌸" data-name="Festival" style="background: rgb(209, 106, 168); color: rgb(255, 255, 255); cursor: pointer;">🌸 Festival</span>
                 <span class="title">Debrecen Flower Carnival</span>
                 <span class="line">🕒 09:00 parade → late night concerts</span>
                 <span class="line">Flower floats parade through the centre</span>
-                <span class="price"><span class="price-val">&euro;25</span> <em class="price-note">Grandstand seat / event pass</em></span>
-              </li></ul><p class="cost">Day total &euro;25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div><p class="loc">Debrecen → Kraków</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€25</span> <em class="price-note">Grandstand seat / event pass</em></span>
+              </li></ul><p class="cost">Day total €25</p></div><div class="cell active"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div><p class="loc">Debrecen → Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">Train Debrecen → Kraków</span>
                 <span class="line">🕒 Full travel day (~9–11h, 1–2 changes)</span>
                 <span class="line">Via Budapest/Katowice or via Košice–Przemyśl</span>
-                <span class="price"><span class="price-val">&euro;45</span> <em class="price-note">Via Košice–Poprad–Kraków, ~9–12h</em></span>
+                <span class="price"><span class="price-val">€45</span> <em class="price-note">Via Košice–Poprad–Kraków, ~9–12h</em></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Kraków stay (2 nights)</span>
                 
                 
-                <span class="price"><span class="price-val">&euro;110</span> <em class="price-note">2 nights × ~55 €</em></span>
-              </li></ul><p class="cost">Day total &euro;155</p></div><div class="cell active"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div><p class="loc">Kraków</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="price"><span class="price-val">€110</span> <em class="price-note">2 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total €155</p></div><div class="cell active"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div><p class="loc">Kraków</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background: rgb(232, 227, 213); color: rgb(58, 58, 70); cursor: pointer;">🏛️ City</span>
                 <span class="title">Kraków full day</span>
                 <span class="line">🕒 All day</span>
                 <span class="line">Wawel, Kazimierz, Rynek Główny</span>
-                <span class="price"><span class="price-val">&euro;40</span> <em class="price-note">Entries + food extra</em></span>
-              </li></ul><p class="cost">Day total &euro;40</p></div><div class="cell active"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div><p class="loc">Kraków → Gdańsk</p><ul class="acts"><li>
-                <span class="chip" data-icon="🚆" data-name="Train" style="background:#4a86c5;color:#ffffff">🚆 Train</span>
+                <span class="price"><span class="price-val">€40</span> <em class="price-note">Entries + food extra</em></span>
+              </li></ul><p class="cost">Day total €40</p></div><div class="cell active"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div><p class="loc">Kraków → Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🚆" data-name="Train" style="background: rgb(74, 134, 197); color: rgb(255, 255, 255); cursor: pointer;">🚆 Train</span>
                 <span class="title">PKP Intercity Kraków → Gdańsk</span>
                 <span class="line">🕒 08:40 → 14:40 (~6h)</span>
                 <span class="line">Book in advance for the cheap fare</span>
-                <span class="price"><span class="price-val">&euro;25</span></span>
+                <span class="price"><span class="price-val">€25</span></span>
               </li><li>
-                <span class="chip" data-icon="🏨" data-name="Stay" style="background:#4fae8b;color:#ffffff">🏨 Stay</span>
+                <span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span>
                 <span class="title">Gdańsk stay (3 nights)</span>
                 
                 
-                <span class="price"><span class="price-val">&euro;165</span> <em class="price-note">3 nights × ~55 €</em></span>
-              </li></ul><p class="cost">Day total &euro;190</p></div><div class="cell active"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div><p class="loc">Gdańsk / Sopot</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏖️" data-name="Beach" style="background:#5fbcc0;color:#14213d">🏖️ Beach</span>
+                <span class="price"><span class="price-val">€165</span> <em class="price-note">3 nights × ~55 €</em></span>
+              </li></ul><p class="cost">Day total €190</p></div><div class="cell active"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div><p class="loc">Gdańsk / Sopot</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏖️" data-name="Beach" style="background: rgb(95, 188, 192); color: rgb(20, 33, 61); cursor: pointer;">🏖️ Beach</span>
                 <span class="title">Cute beach day in Sopot</span>
                 <span class="line">🕒 SKM train 25 min, then all day</span>
                 <span class="line">Sopot pier + Jelitkowo sand</span>
-                <span class="price"><span class="price-val">&euro;8</span> <em class="price-note">SKM return + sunbed</em></span>
-              </li></ul><p class="cost">Day total &euro;8</p></div><div class="cell active"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div><p class="loc">Gdańsk</p><ul class="acts"><li>
-                <span class="chip" data-icon="🏛️" data-name="City" style="background:#e8e3d5;color:#3a3a46">🏛️ City</span>
+                <span class="price"><span class="price-val">€8</span> <em class="price-note">SKM return + sunbed</em></span>
+              </li></ul><p class="cost">Day total €8</p></div><div class="cell active"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div><p class="loc">Gdańsk</p><ul class="acts"><li>
+                <span class="chip" data-icon="🏛️" data-name="City" style="background: rgb(232, 227, 213); color: rgb(58, 58, 70); cursor: pointer;">🏛️ City</span>
                 <span class="title">Gdańsk old town &amp; amber</span>
                 <span class="line">🕒 All day</span>
                 <span class="line">Motława river, Mariacka street, museums</span>
-                <span class="price"><span class="price-val">&euro;25</span></span>
-              </li></ul><p class="cost">Day total &euro;25</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column:1 / 4">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div><p class="loc">Gdańsk → Milan</p><ul class="acts"><li>
-                <span class="chip" data-icon="✈️" data-name="Flight" style="background:#7a6ec9;color:#ffffff">✈️ Flight</span>
+                <span class="price"><span class="price-val">€25</span></span>
+              </li></ul><p class="cost">Day total €25</p></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 1 / 4;">Holiday — time off · Aug 13–26</div></div><div class="grid week"><div class="cell active"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div><p class="loc">Gdańsk → Milan</p><ul class="acts"><li>
+                <span class="chip" data-icon="✈️" data-name="Flight" style="background: rgb(122, 110, 201); color: rgb(255, 255, 255); cursor: pointer;">✈️ Flight</span>
                 <span class="title">Flight Gdańsk GDN → Milan (Wizz/Ryanair)</span>
                 <span class="line">🕒 Afternoon, ~2h15</span>
                 <span class="line">Trip ends — direct low-cost route</span>
-                <span class="price"><span class="price-val">&euro;70</span> <em class="price-note">One-way, hand luggage only</em></span>
-              </li></ul><p class="cost">Day total &euro;70</p></div><div class="cell holi"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
+                <span class="price"><span class="price-val">€70</span> <em class="price-note">One-way, hand luggage only</em></span>
+              </li></ul><p class="cost">Day total €70</p></div><div class="cell holi"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div></div><div class="cell holi"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
+  </section><section class="panel on" id="panel-option-3">
+    <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell active"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div><p class="loc">Bratislava</p><ul class="acts"><li><span class="chip" data-icon="🏨" data-name="Stay" style="background: rgb(79, 174, 139); color: rgb(255, 255, 255); cursor: pointer;">🏨 Stay</span><span class="title">Ubytovňa Nobelova</span><span class="line">🕒 01/08-04/08</span><span class="price"><span class="price-val">€135</span></span></li></ul><p class="cost">Day total €135</p></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">13</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">14</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">15</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">16</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">17</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">18</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">19</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">20</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">21</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">22</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">23</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">24</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">25</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">26</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">27</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">28</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">29</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">30</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">31</span><span class="wd">Mon</span></div></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div></div>
   </section>
   <h2>Budget overview</h2>
   <div class="budget">
-    <ul><li><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>&euro;997</strong></li><li><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>&euro;786</strong></li></ul>
+    <ul><li><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>€997</strong></li><li><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>€786</strong></li><li><span><span class="budget-name">3. Bratislava</span></span><strong>€135</strong></li></ul>
     <p class="fine">Estimates per person: trains, festival tickets, thermal bath, accommodation and the flight. Food and drinks not included.</p>
   </div>
   <footer>Travel plan · August 2026</footer>
@@ -609,6 +629,21 @@
     }
   });
 
+  // Shared popover placement: anchor below-left of the trigger element, then
+  // clamp so it can't run off the right/bottom edge on narrow (mobile) viewports.
+  function positionPopover(pop, anchorEl){
+    document.body.appendChild(pop);
+    var r = anchorEl.getBoundingClientRect();
+    var popW = pop.offsetWidth, popH = pop.offsetHeight;
+    var left = r.left;
+    var top = r.bottom + 4;
+    if(left + popW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - popW - 8);
+    if(top + popH > window.innerHeight - 8) top = Math.max(8, r.top - popH - 4);
+    pop.style.left = (window.scrollX + left) + 'px';
+    pop.style.top = (window.scrollY + top) + 'px';
+    openPop = pop;
+  }
+
   function openLinkManager(li, anchorEl){
     closePop();
     var pop = document.createElement('div');
@@ -652,11 +687,7 @@
     }
     rebuild();
 
-    document.body.appendChild(pop);
-    var r = anchorEl.getBoundingClientRect();
-    pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
-    pop.style.left = (window.scrollX + r.left) + 'px';
-    openPop = pop;
+    positionPopover(pop, anchorEl);
   }
 
   // ---- photo ----
@@ -766,11 +797,7 @@
       closePop();
     });
 
-    document.body.appendChild(pop);
-    var r = chip.getBoundingClientRect();
-    pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
-    pop.style.left = (window.scrollX + r.left) + 'px';
-    openPop = pop;
+    positionPopover(pop, chip);
   }
 
   function applyTag(chip, t){
@@ -822,11 +849,7 @@
       recomputeCell(cell);
     }, true);
 
-    document.body.appendChild(pop);
-    var r = anchorEl.getBoundingClientRect();
-    pop.style.top = (window.scrollY + r.bottom + 4) + 'px';
-    pop.style.left = (window.scrollX + r.left) + 'px';
-    openPop = pop;
+    positionPopover(pop, anchorEl);
   }
 
   function attachItemControls(li){
@@ -988,8 +1011,9 @@
       cellWidth: cellRect.width,
       cellHeight: cellRect.height
     };
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', onDragEnd);
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('pointerup', onDragEnd);
+    document.addEventListener('pointercancel', onDragEnd);
   }
   function onDragMove(e){
     if(!dragState) return;
@@ -1009,8 +1033,9 @@
   }
   function onDragEnd(){
     dragState = null;
-    document.removeEventListener('mousemove', onDragMove);
-    document.removeEventListener('mouseup', onDragEnd);
+    document.removeEventListener('pointermove', onDragMove);
+    document.removeEventListener('pointerup', onDragEnd);
+    document.removeEventListener('pointercancel', onDragEnd);
   }
 
   function nudgeHoliday(panel, which, delta){
@@ -1067,14 +1092,16 @@
         var hl = document.createElement('span');
         hl.className = 'handle handle-left jsctl';
         hl.title = 'Drag to change the start day';
-        hl.addEventListener('mousedown', function(e){ startDrag(e, panel, 'start'); });
+        hl.style.touchAction = 'none';
+        hl.addEventListener('pointerdown', function(e){ startDrag(e, panel, 'start'); });
         banner.appendChild(hl);
       }
       if(containsEnd){
         var hrr = document.createElement('span');
         hrr.className = 'handle handle-right jsctl';
         hrr.title = 'Drag to change the end day';
-        hrr.addEventListener('mousedown', function(e){ startDrag(e, panel, 'end'); });
+        hrr.style.touchAction = 'none';
+        hrr.addEventListener('pointerdown', function(e){ startDrag(e, panel, 'end'); });
         banner.appendChild(hrr);
 
         var nudgeR = document.createElement('button');
