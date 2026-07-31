@@ -481,6 +481,14 @@
 </script>
 <script>
 (function(){
+  // Bump this string every time a new baseline is published (e.g. after
+  // manually merging live edits into the repo, as happened here). It lets
+  // the restore step below tell "cached edits on top of THIS baseline" from
+  // "cached edits from a baseline that's since been replaced" — without it,
+  // a stale local cache would silently keep masking every future publish,
+  // since it would otherwise always be treated as newer than the file.
+  var BUILD_ID = 'build-2026-07-31-coastal-mobile';
+
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
   // init (attaching controls, rendering the holiday banner, etc.) operates
@@ -491,15 +499,25 @@
     var hosted = location.protocol === 'http:' || location.protocol === 'https:';
     if(!hosted) return;
     try{
-      var saved = localStorage.getItem('travelPlanHtml_v1');
-      if(saved){
-        var parsed = new DOMParser().parseFromString(saved, 'text/html');
-        var newWrap = parsed.querySelector('.wrap');
-        var curWrap = document.querySelector('.wrap');
-        if(newWrap && curWrap) curWrap.replaceWith(newWrap);
-        var newTagData = parsed.getElementById('tagData');
-        var curTagData = document.getElementById('tagData');
-        if(newTagData && curTagData) curTagData.textContent = newTagData.textContent;
+      var raw = localStorage.getItem('travelPlanHtml_v1');
+      if(raw){
+        var entry = null;
+        try { entry = JSON.parse(raw); } catch(e){ entry = null; }
+        // Old format (a previous version stored the raw HTML string directly,
+        // with no build stamp) or a build mismatch both mean the cached copy
+        // predates the current published baseline — treat the file as
+        // authoritative and drop the stale cache instead of restoring over it.
+        if(entry && entry.build === BUILD_ID && entry.html){
+          var parsed = new DOMParser().parseFromString(entry.html, 'text/html');
+          var newWrap = parsed.querySelector('.wrap');
+          var curWrap = document.querySelector('.wrap');
+          if(newWrap && curWrap) curWrap.replaceWith(newWrap);
+          var newTagData = parsed.getElementById('tagData');
+          var curTagData = document.getElementById('tagData');
+          if(newTagData && curTagData) curTagData.textContent = newTagData.textContent;
+        } else {
+          localStorage.removeItem('travelPlanHtml_v1');
+        }
       }
     } catch(e){}
     document.documentElement.style.visibility = '';
@@ -1301,7 +1319,7 @@
   }
 
   function saveToLocalStorage(htmlStr){
-    try{ localStorage.setItem(LS_KEY, htmlStr); return true; }
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({ build: BUILD_ID, html: htmlStr })); return true; }
     catch(err){ return false; }
   }
 
