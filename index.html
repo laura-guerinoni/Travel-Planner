@@ -522,7 +522,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-month-filter-remove-favicon-fix';
+  var BUILD_ID = 'build-2026-08-04-pill-click-filter-sync';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -690,6 +690,8 @@
     var id = btn.getAttribute('data-opt');
     document.querySelectorAll('.pill[data-opt]').forEach(function (b) { b.classList.toggle('on', b === btn); });
     document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('on', p.id === 'panel-' + id); });
+    var newPanel = document.getElementById('panel-' + id);
+    if(newPanel){ var nd = getPanelDate(newPanel); filterPillsByMonth(nd.year, nd.month); }
   });
 
   function parseMoney(str){
