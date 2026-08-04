@@ -14,7 +14,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Travel Plan — August 2026</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="9" fill="%231fa896"/><rect x="7" y="7" width="18" height="18" rx="4" fill="%23f7f1ea"/><path d="M16 9.5L17.6 13.79 22.18 13.99 18.6 16.84 19.82 21.26 16 18.73 12.18 21.26 13.4 16.84 9.82 13.99 14.4 13.79Z" fill="%23ef9a5c"/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect x=%271%27 y=%271%27 width=%2730%27 height=%2730%27 rx=%279%27 fill=%27%231fa896%27/><rect x=%277%27 y=%277%27 width=%2718%27 height=%2718%27 rx=%274%27 fill=%27%23f7f1ea%27/><path d=%27M16 9.5L17.6 13.79 22.18 13.99 18.6 16.84 19.82 21.26 16 18.73 12.18 21.26 13.4 16.84 9.82 13.99 14.4 13.79Z%27 fill=%27%23ef9a5c%27/></svg>">
 <style>
   :root { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92; }
   * { box-sizing:border-box; }
@@ -72,14 +72,18 @@
   .month-sidebar { position:fixed; left:0; top:0; bottom:0; width:40px; z-index:30; display:flex;
     flex-direction:column; box-shadow:2px 0 6px rgba(0,0,0,.08); }
   .month-segment { position:relative; flex:1 1 0; display:flex; align-items:center; justify-content:center;
-    overflow:hidden; border-top:1px solid rgba(255,255,255,.25); }
+    overflow:hidden; border-top:1px solid rgba(255,255,255,.25); cursor:pointer; }
   .month-segment:first-child { border-top:none; }
   .seg-label { color:#fff; writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
     font-weight:800; font-size:15px; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
-  .seg-add { display:none; position:absolute; top:4px; left:50%; transform:translateX(-50%); width:18px; height:18px;
+  .seg-add, .seg-remove { display:none; position:absolute; left:50%; transform:translateX(-50%); width:18px; height:18px;
     border-radius:50%; border:none; background:rgba(255,255,255,.9); color:var(--ink); font-weight:800; font-size:12px;
     line-height:18px; padding:0; cursor:pointer; }
-  .month-segment:hover .seg-add { display:block; }
+  .seg-add { top:4px; }
+  .seg-remove { bottom:4px; color:#d9534f; }
+  .month-segment:hover .seg-add, .month-segment:hover .seg-remove { display:block; }
+
+  .pill-filtered-out { display:none; }
 
   .monthpop { display:block; position:absolute; z-index:50; background:var(--card); border:1px solid var(--line);
     border-radius:10px; padding:8px; box-shadow:0 10px 28px rgba(0,0,0,.18); font-size:13px; width:170px; }
@@ -518,7 +522,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-multi-month-and-dragging';
+  var BUILD_ID = 'build-2026-08-04-month-filter-remove-favicon-fix';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -1596,6 +1600,7 @@
     clone.querySelectorAll('.grid .cell').forEach(attachCellControls);
     buildCalendarGrid(clone);
     renderMonthSidebar();
+    filterPillsByMonth(year, month);
     return clone;
   }
 
@@ -1619,6 +1624,59 @@
     var yy = String(year).slice(2);
     if(segCount <= 6) return MONTH_SHORT[month - 1] + ' ' + yy;
     return (month < 10 ? '0' + month : month) + '/' + yy;
+  }
+
+  // Clicking a sidebar segment shows only the options that belong to its
+  // month (others stay in the DOM, just hidden) and switches to one of
+  // them, so you're never looking at options from the wrong month.
+  function filterPillsByMonth(year, month){
+    var firstMatch = null;
+    document.querySelectorAll('.pill[data-opt]').forEach(function(pill){
+      var panel = document.getElementById('panel-' + pill.getAttribute('data-opt'));
+      var d = getPanelDate(panel);
+      var matches = d.year === year && d.month === month;
+      pill.classList.toggle('pill-filtered-out', !matches);
+      if(matches && !firstMatch) firstMatch = pill;
+    });
+    var activePill = document.querySelector('.pill[data-opt].on');
+    var activeMatches = activePill && !activePill.classList.contains('pill-filtered-out');
+    if(!activeMatches && firstMatch){
+      document.querySelectorAll('.pill[data-opt]').forEach(function(b){ b.classList.remove('on'); });
+      document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on'); });
+      firstMatch.classList.add('on');
+      document.getElementById('panel-' + firstMatch.getAttribute('data-opt')).classList.add('on');
+    }
+  }
+
+  function removeMonth(year, month){
+    var opts = [];
+    document.querySelectorAll('.panel').forEach(function(panel){
+      var d = getPanelDate(panel);
+      if(d.year === year && d.month === month) opts.push(optOf(panel));
+    });
+    var totalOptions = document.querySelectorAll('.pill[data-opt]').length;
+    if(opts.length >= totalOptions){
+      window.alert("Can't remove the only month/option left.");
+      return;
+    }
+    var label = formatMonthLabel(year, month, 1);
+    if(!window.confirm('Remove ' + label + ' and all ' + opts.length + ' option(s) in it? This can\'t be undone.')) return;
+    opts.forEach(function(opt){
+      var pill = document.querySelector('.pill[data-opt="' + opt + '"]');
+      var panel = document.getElementById('panel-' + opt);
+      var budgetLi = document.querySelector('.budget li[data-opt="' + opt + '"]');
+      if(pill) pill.remove();
+      if(panel) panel.remove();
+      if(budgetLi) budgetLi.remove();
+    });
+    var firstPill = document.querySelector('.pill[data-opt]');
+    if(firstPill && !document.querySelector('.pill[data-opt].on')){
+      firstPill.classList.add('on');
+      document.getElementById('panel-' + firstPill.getAttribute('data-opt')).classList.add('on');
+    }
+    renderMonthSidebar();
+    var activePanel = document.querySelector('.panel.on');
+    if(activePanel){ var d = getPanelDate(activePanel); filterPillsByMonth(d.year, d.month); }
   }
 
   function openMonthPickerPopover(anchorEl, year, month, applyLabel, onApply){
@@ -1664,6 +1722,8 @@
       var seg = document.createElement('div');
       seg.className = 'month-segment';
       seg.style.background = SEG_COLORS[idx % SEG_COLORS.length];
+      seg.title = 'Click to show only this month\'s options';
+      seg.addEventListener('click', function(){ filterPillsByMonth(s.year, s.month); });
 
       var label = document.createElement('span');
       label.className = 'seg-label';
@@ -1680,6 +1740,7 @@
             }
           });
           renderMonthSidebar();
+          filterPillsByMonth(newYear, newMonth);
         });
       });
       seg.appendChild(label);
@@ -1698,6 +1759,15 @@
         });
       });
       seg.appendChild(addBtn);
+
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button'; removeBtn.className = 'seg-remove jsctl'; removeBtn.textContent = '✕';
+      removeBtn.title = 'Remove this month and all its options';
+      removeBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        removeMonth(s.year, s.month);
+      });
+      seg.appendChild(removeBtn);
 
       sidebar.appendChild(seg);
     });
@@ -1732,6 +1802,10 @@
   document.querySelectorAll('.grid .cell').forEach(attachCellControls);
   document.querySelectorAll('.panel').forEach(renderHoliday);
   renderMonthSidebar();
+  (function(){
+    var activePanel = document.querySelector('.panel.on') || document.querySelector('.panel');
+    if(activePanel){ var d0 = getPanelDate(activePanel); filterPillsByMonth(d0.year, d0.month); }
+  })();
 
   document.addEventListener('input', function(e){
     if(e.target.classList && e.target.classList.contains('price-val')){
