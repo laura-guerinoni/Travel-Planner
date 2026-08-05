@@ -87,10 +87,16 @@
     transition:box-shadow .15s ease, filter .15s ease; }
   .month-segment:hover { box-shadow:3px 3px 0 rgba(0,0,0,.06), 5px 6px 14px rgba(0,0,0,.28); }
   /* the segment matching whichever option is currently on screen — left
-     edge stays flush with the others (no horizontal shift), just a
-     brighter fill and deeper shadow so it still reads as "in use" */
+     edge stays flush with the others (no horizontal shift); a running
+     stitch traced just inside the edge (like hand-sewing around a fabric
+     patch) marks it as "in use" instead */
   .month-segment.current { box-shadow:3px 3px 0 rgba(0,0,0,.08), 6px 7px 16px rgba(0,0,0,.32);
     filter:brightness(1.1); z-index:1; }
+  .month-segment.current::before {
+    content:''; position:absolute; inset:5px; pointer-events:none;
+    border-radius:0 12px 12px 0;
+    border:2px dashed rgba(255,255,255,.85);
+  }
   .seg-label { color:#fff; writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
     font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
   .seg-add, .seg-remove { display:none; position:absolute; left:50%; transform:translateX(-50%); width:18px; height:18px;
@@ -574,7 +580,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-bookmark-tabs-left-aligned';
+  var BUILD_ID = 'build-2026-08-04-stitched-bookmark-indicator';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
