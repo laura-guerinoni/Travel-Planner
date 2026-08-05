@@ -545,7 +545,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-stale-cache-banner';
+  var BUILD_ID = 'build-2026-08-04-robust-filter-and-split-costs';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -750,11 +750,25 @@
   }
 
   function recomputeCell(cell){
-    var vals = cell.querySelectorAll('.acts .price-val');
-    var sum = 0;
-    vals.forEach(function(v){ sum += parseMoney(v.textContent); });
+    // A multi-day activity's price is split evenly across every day it
+    // spans (start day included) rather than counted in full on just one
+    // day — the ghost echoes show the same price text for recognizability,
+    // but only its share counts toward that day's total.
+    var sum = 0, count = 0;
+    cell.querySelectorAll(':scope > .acts > li').forEach(function(li){
+      var v = li.querySelector(':scope > .price > .price-val');
+      if(!v) return;
+      count++;
+      var amount = parseMoney(v.textContent);
+      var start = li.dataset.spanStart, end = li.dataset.spanEnd;
+      if(start && end){
+        var days = parseInt(end, 10) - parseInt(start, 10) + 1;
+        if(days > 1) amount = amount / days;
+      }
+      sum += amount;
+    });
     var costEl = cell.querySelector(':scope > .cost');
-    if(vals.length === 0){
+    if(count === 0){
       if(costEl) costEl.remove();
     } else {
       if(!costEl){
@@ -1065,6 +1079,8 @@
     chip.style.background = t.bg;
     chip.style.color = t.fg;
     chip.textContent = t.icon + ' ' + t.name;
+    var spanLi = chip.closest('.acts > li[data-span-start]');
+    if(spanLi){ var panel = spanLi.closest('.panel'); if(panel) renderActivitySpans(panel); }
   }
 
   function mkBtn(label, fn){
@@ -1209,20 +1225,25 @@
   }
   function renderActivitySpans(panel){
     panel.querySelectorAll('.act-span-ghost').forEach(function(g){ g.remove(); });
+    var touchedCells = [];
     panel.querySelectorAll('.acts > li[data-span-start]').forEach(function(li){
       var start = parseInt(li.dataset.spanStart, 10), end = parseInt(li.dataset.spanEnd, 10);
       var originCell = li.closest('.cell');
       var originDay = dayNumOfCell(originCell);
       if(!start || !end) return;
+      touchedCells.push(originCell);
       for(var d = start; d <= end; d++){
         if(d === originDay) continue;
         var targetCell = null;
         panel.querySelectorAll('.cell:not(.empty)').forEach(function(c){ if(dayNumOfCell(c) === d) targetCell = c; });
         if(!targetCell) continue;
+        touchedCells.push(targetCell);
         var acts = ensureActsList(targetCell);
         var ghost = document.createElement('li');
         ghost.className = 'act-span-ghost jsctl';
-        ghost.title = 'Continues from day ' + start + ' — edit it there';
+        ghost.dataset.spanStart = start;
+        ghost.dataset.spanEnd = end;
+        ghost.title = 'Continues from day ' + start + ' — edit the title, tag, or price there';
         var chip = li.querySelector(':scope > .chip');
         if(chip){
           var chipClone = document.createElement('span');
@@ -1241,9 +1262,24 @@
         contSpan.className = 'line';
         contSpan.textContent = '↔ continues';
         ghost.appendChild(contSpan);
+        var priceEl = li.querySelector(':scope > .price .price-val');
+        if(priceEl){
+          var priceWrap = document.createElement('span');
+          priceWrap.className = 'price';
+          var priceValClone = document.createElement('span');
+          priceValClone.className = 'price-val';
+          priceValClone.textContent = priceEl.textContent;
+          priceWrap.appendChild(priceValClone);
+          ghost.appendChild(priceWrap);
+        }
         acts.appendChild(ghost);
       }
     });
+    // The origin's day and every ghost day just changed what's in their
+    // .acts list (or how a shared price should be split across them), so
+    // every touched day's total needs recomputing, not just the one the
+    // edit happened in.
+    touchedCells.forEach(recomputeCell);
   }
 
   // Drag one day onto another to swap their full content (location,
@@ -1954,6 +1990,18 @@
     });
   }
 
+  // Re-derives and re-applies the pill filter from whatever panel is
+  // *actually* active right now, with no arguments to get wrong or a call
+  // site to forget — wired into the MutationObserver below so it self-heals
+  // after every relevant DOM change instead of depending on every single
+  // mutation site remembering to call filterPillsByMonth itself.
+  function syncPillFilter(){
+    var activePanel = document.querySelector('.panel.on');
+    if(!activePanel) return;
+    var d = getPanelDate(activePanel);
+    filterPillsByMonth(d.year, d.month);
+  }
+
   function removeMonth(year, month){
     var opts = [];
     document.querySelectorAll('.panel').forEach(function(panel){
@@ -2156,12 +2204,22 @@
 
   document.addEventListener('input', function(e){
     if(e.target.classList && e.target.classList.contains('price-val')){
-      var cell = e.target.closest('.cell');
-      if(cell) recomputeCell(cell);
+      var priceLi = e.target.closest('.acts > li[data-span-start]');
+      if(priceLi){
+        var pricePanel = priceLi.closest('.panel');
+        if(pricePanel) renderActivitySpans(pricePanel);
+      } else {
+        var cell = e.target.closest('.cell');
+        if(cell) recomputeCell(cell);
+      }
     }
     if(e.target.classList && e.target.classList.contains('line')){
       var li = e.target.closest('.acts > li');
       if(li) updateActivitySpan(li);
+    }
+    if(e.target.classList && e.target.classList.contains('title')){
+      var titleLi = e.target.closest('.acts > li[data-span-start]');
+      if(titleLi){ var p = titleLi.closest('.panel'); if(p) renderActivitySpans(p); }
     }
   });
 
@@ -2437,7 +2495,7 @@
       if(node.nodeType === 3) node = node.parentElement;
       return node && !node.closest(SAVE_EXCLUDE_SEL);
     });
-    if(relevant){ scheduleAutoSave(); scheduleUndoSnapshot(); }
+    if(relevant){ scheduleAutoSave(); scheduleUndoSnapshot(); syncPillFilter(); }
   });
   mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true,
     attributeFilter: ['style', 'class', 'data-links', 'data-img', 'href', 'src', 'data-holidays', 'data-year', 'data-month', 'data-icon', 'data-name'] });
