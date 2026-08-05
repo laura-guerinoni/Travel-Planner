@@ -14,7 +14,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Travel Plan — August 2026</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect x=%271%27 y=%271%27 width=%2730%27 height=%2730%27 rx=%279%27 fill=%27%231fa896%27/><rect x=%277%27 y=%277%27 width=%2718%27 height=%2718%27 rx=%274%27 fill=%27%23f7f1ea%27/><path d=%27M16 9.5L17.6 13.79 22.18 13.99 18.6 16.84 19.82 21.26 16 18.73 12.18 21.26 13.4 16.84 9.82 13.99 14.4 13.79Z%27 fill=%27%23ef9a5c%27/></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect x=%272%27 y=%272%27 width=%2728%27 height=%2728%27 rx=%278%27 fill=%27%23f7f1ea%27/><path d=%27M 16.0,6.0 L 18.47,12.6 L 25.51,12.91 L 19.99,17.3 L 21.88,24.09 L 16.0,20.2 L 10.12,24.09 L 12.01,17.3 L 6.49,12.91 L 13.53,12.6 Z%27 fill=%27%23ef9a5c%27/></svg>">
 <style>
   :root { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92; }
   * { box-sizing:border-box; }
@@ -136,9 +136,11 @@
   .itemmenu-row.danger { color:#d9534f; }
   .itemmenu-row.danger:hover { background:rgba(217,83,79,.1); }
 
-  .addact { display:none; width:100%; margin-top:6px; border:1px dashed var(--line); background:transparent;
+  .addact, .addloc { display:none; width:100%; margin-top:6px; border:1px dashed var(--line); background:transparent;
     color:var(--muted); border-radius:8px; padding:4px; font-size:11px; font-weight:700; cursor:pointer; }
   .cell:hover .addact, .cell:focus-within .addact { display:block; }
+  .cell:hover .addloc, .cell:focus-within .addloc { display:block; }
+  .cell:has(> .loc) .addloc { display:none; }
   .cleardaybtn { display:none; position:absolute; top:4px; right:6px; border:none; background:transparent;
     color:var(--muted); font-size:11px; cursor:pointer; }
   .cleardaybtn.has-content { display:none; }
@@ -146,7 +148,7 @@
 
   [contenteditable="true"] { border-radius:4px; }
   [contenteditable="true"]:hover { background:rgba(217,102,63,.06); }
-  [contenteditable="true"]:focus { outline:1px solid var(--primary); background:#fff; }
+  [contenteditable="true"]:focus { outline:1px solid var(--primary); background:#fff; color:var(--ink); }
 
   .acts li { position:relative; }
   .acts li:hover .photopreview { display:block; }
@@ -165,9 +167,8 @@
 
   .banner { position:relative; overflow:visible; }
   .handle { position:absolute; top:1px; bottom:1px; width:14px; cursor:ew-resize; border-radius:4px;
-    background:repeating-linear-gradient(to right, rgba(255,255,255,.6) 0 2px, transparent 2px 5px);
-    opacity:.6; }
-  .handle:hover { opacity:1; }
+    background:transparent; }
+  .handle:hover { background:rgba(255,255,255,.25); }
   .handle-left { left:1px; }
   .handle-right { right:1px; }
   .banner-label { cursor:text; border-radius:3px; }
@@ -187,6 +188,11 @@
     white-space:nowrap; }
   .tagpop-row:hover { background:var(--bg); }
   .tagpop-swatch { display:inline-block; width:14px; height:14px; border-radius:4px; flex:none; }
+  .tagpop-rowtext { flex:1; overflow:hidden; text-overflow:ellipsis; }
+  .tagpop-edit { display:none; flex:none; border:none; background:transparent; color:var(--muted);
+    border-radius:5px; width:20px; height:20px; font-size:12px; cursor:pointer; margin-left:auto; }
+  .tagpop-edit:hover { background:var(--line); color:var(--ink); }
+  .tagpop-row:hover .tagpop-edit { display:inline-block; }
   .tagpop hr { border:none; border-top:1px solid var(--line); margin:6px 2px; }
   .tagpop input[type="text"] { width:100%; box-sizing:border-box; font:inherit; font-size:12px; padding:5px 8px;
     border:1px solid var(--line); border-radius:6px; margin-bottom:5px; }
@@ -466,7 +472,6 @@
     <ul><li data-opt="option-1"><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>€997</strong></li><li data-opt="option-2"><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>€786</strong></li><li data-opt="option-3"><span><span class="budget-name">3. Bratislava</span></span><strong>€135</strong></li></ul>
     <p class="fine">Estimates per person: trains, festival tickets, thermal bath, accommodation and the flight. Food and drinks not included.</p>
   </div>
-  <footer>Travel plan · August 2026</footer>
 </div>
 <script id="tagData" type="application/json">
 [
@@ -522,7 +527,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-pill-click-filter-sync';
+  var BUILD_ID = 'build-2026-08-04-batch-features-2';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -903,18 +908,29 @@
     closePop();
     var pop = document.createElement('div');
     pop.className = 'tagpop';
-    TAGS.forEach(function(t){
+    TAGS.forEach(function(t, idx){
       var row = document.createElement('div');
       row.className = 'tagpop-row';
       var sw = document.createElement('span');
       sw.className = 'tagpop-swatch';
       sw.style.background = t.bg;
       row.appendChild(sw);
-      row.appendChild(document.createTextNode(t.icon + ' ' + t.name));
+      var textSpan = document.createElement('span');
+      textSpan.className = 'tagpop-rowtext';
+      textSpan.textContent = t.icon + ' ' + t.name;
+      row.appendChild(textSpan);
       row.addEventListener('click', function(){
         applyTag(chip, t);
         closePop();
       });
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button'; editBtn.className = 'tagpop-edit'; editBtn.textContent = '✎';
+      editBtn.title = 'Edit this tag';
+      editBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openTagEditor(chip, idx);
+      });
+      row.appendChild(editBtn);
       pop.appendChild(row);
     });
     var hr = document.createElement('hr');
@@ -955,6 +971,52 @@
     });
 
     positionPopover(pop, chip);
+  }
+
+  // Editing an existing tag changes its shared definition (icon/name/color),
+  // which then needs to propagate to every activity chip currently using it —
+  // tags aren't per-activity copies, they're looked up by icon+name key.
+  function openTagEditor(chip, idx){
+    closePop();
+    var tag = TAGS[idx];
+    if(!tag) return;
+    var oldKey = tagKey(tag);
+    var pop = document.createElement('div');
+    pop.className = 'tagpop';
+
+    var form = document.createElement('div');
+    form.className = 'formwrap';
+    var iconInput = document.createElement('input');
+    iconInput.type = 'text'; iconInput.placeholder = 'Icon (emoji)'; iconInput.maxLength = 4; iconInput.value = tag.icon;
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.placeholder = 'Name'; nameInput.value = tag.name;
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color'; colorInput.value = tag.bg;
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'addbtn'; saveBtn.type = 'button'; saveBtn.textContent = 'Save changes';
+    form.appendChild(iconInput); form.appendChild(nameInput); form.appendChild(colorInput); form.appendChild(saveBtn);
+    pop.appendChild(form);
+
+    saveBtn.addEventListener('click', function(){
+      var icon = iconInput.value.trim() || tag.icon;
+      var name = nameInput.value.trim() || tag.name;
+      var bg = colorInput.value;
+      var fg = fgFor(bg);
+      var updated = { icon: icon, name: name, bg: bg, fg: fg };
+      TAGS[idx] = updated;
+      persistTags();
+      updateTagEverywhere(oldKey, updated);
+      closePop();
+    });
+
+    positionPopover(pop, chip);
+  }
+
+  function updateTagEverywhere(oldKey, t){
+    document.querySelectorAll('.chip[data-icon][data-name]').forEach(function(c){
+      var k = c.getAttribute('data-icon') + '|' + c.getAttribute('data-name');
+      if(k === oldKey) applyTag(c, t);
+    });
   }
 
   function applyTag(chip, t){
@@ -1227,6 +1289,10 @@
     addBtn.type = 'button'; addBtn.className = 'addact jsctl';
     addBtn.textContent = '+ Add activity';
 
+    var addLocBtn = document.createElement('button');
+    addLocBtn.type = 'button'; addLocBtn.className = 'addloc jsctl';
+    addLocBtn.textContent = '+ Add location';
+
     var clearBtn = document.createElement('button');
     clearBtn.type = 'button'; clearBtn.className = 'cleardaybtn jsctl';
     clearBtn.textContent = '✕ clear day';
@@ -1236,9 +1302,8 @@
       clearBtn.classList.toggle('has-content', hasLoc);
     }
 
-    addBtn.addEventListener('click', function(){
+    function ensureLoc(){
       var loc = cell.querySelector(':scope > .loc');
-      var acts = cell.querySelector(':scope > .acts');
       if(!loc){
         loc = document.createElement('p');
         loc.className = 'loc';
@@ -1247,11 +1312,28 @@
         cell.insertBefore(loc, addBtn);
         cell.classList.add('active');
       }
+      return loc;
+    }
+    function ensureActs(){
+      var acts = cell.querySelector(':scope > .acts');
       if(!acts){
         acts = document.createElement('ul');
         acts.className = 'acts';
         cell.insertBefore(acts, addBtn);
       }
+      return acts;
+    }
+
+    addLocBtn.addEventListener('click', function(){
+      ensureLoc();
+      ensureActs();
+      refreshHoliCell(cell);
+      refreshClear();
+    });
+
+    addBtn.addEventListener('click', function(){
+      ensureLoc();
+      var acts = ensureActs();
       var li = newActivityLi();
       acts.appendChild(li);
       attachItemControls(li);
@@ -1274,6 +1356,7 @@
     });
 
     cell.appendChild(clearBtn);
+    cell.appendChild(addLocBtn);
     cell.appendChild(addBtn);
     refreshClear();
   }
@@ -1606,12 +1689,116 @@
     return clone;
   }
 
+  // Duplicates an option exactly (content, holidays, price) — unlike
+  // createOption, which deliberately starts a fresh empty panel. Cloned
+  // .jsctl controls carry stale "already wired" markers (e.g. the cellhead
+  // drag flag), so those are cleared before re-attaching so drag-to-swap
+  // still works on the copy.
+  function duplicateOption(opt){
+    var srcPanel = document.getElementById('panel-' + opt);
+    var srcPill = document.querySelector('.pill[data-opt="' + opt + '"]');
+    var srcBudgetLi = document.querySelector('.budget li[data-opt="' + opt + '"]');
+    if(!srcPanel || !srcPill) return;
+    var panels = document.querySelectorAll('.panel');
+    var n = panels.length + 1;
+    var clone = srcPanel.cloneNode(true);
+    clone.id = 'panel-option-' + n;
+    clone.classList.remove('on');
+    clone.querySelectorAll('.jsctl').forEach(function(x){ x.remove(); });
+    clone.querySelectorAll('.tagpop, .linkpop, .monthpop').forEach(function(x){ x.remove(); });
+    clone.querySelectorAll(':scope > .grid.banner-row').forEach(function(x){ x.remove(); });
+    clone.querySelectorAll('.cellhead').forEach(function(h){ h.removeAttribute('data-drag-wired'); });
+    srcPanel.insertAdjacentElement('afterend', clone);
+
+    var srcName = srcPill.querySelector('.pill-name').textContent;
+    var srcPrice = srcPill.querySelector('.pill-price').textContent;
+
+    var newPill = document.createElement('button');
+    newPill.type = 'button'; newPill.className = 'pill';
+    newPill.setAttribute('data-opt', 'option-' + n);
+    newPill.innerHTML = '<span class="pill-name"></span> <span class="pill-price"></span>' +
+      '<span class="pill-remove" title="Remove option">&times;</span>';
+    newPill.querySelector('.pill-name').textContent = srcName;
+    newPill.querySelector('.pill-price').textContent = srcPrice;
+    srcPill.insertAdjacentElement('afterend', newPill);
+    wirePill(newPill);
+
+    var budgetList = document.querySelector('.budget ul');
+    var li = document.createElement('li');
+    li.setAttribute('data-opt', 'option-' + n);
+    li.innerHTML = '<span><span class="budget-name"></span></span><strong></strong>';
+    li.querySelector('.budget-name').textContent = srcName;
+    li.querySelector('strong').textContent = srcPrice;
+    if(srcBudgetLi) srcBudgetLi.insertAdjacentElement('afterend', li);
+    else budgetList.appendChild(li);
+
+    clone.querySelectorAll('.grid .cell').forEach(attachCellControls);
+    clone.querySelectorAll('.acts li').forEach(attachItemControls);
+    renderHoliday(clone);
+    renderMonthSidebar();
+    var d = getPanelDate(clone);
+    filterPillsByMonth(d.year, d.month);
+    return clone;
+  }
+
+  function openPillContextMenu(pill, x, y){
+    closePop();
+    var pop = document.createElement('div');
+    pop.className = 'itemmenu';
+    var row = document.createElement('div');
+    row.className = 'itemmenu-row';
+    row.textContent = '⧉  Duplicate';
+    row.addEventListener('click', function(e){
+      e.stopPropagation();
+      closePop();
+      duplicateOption(pill.getAttribute('data-opt'));
+    });
+    pop.appendChild(row);
+    document.body.appendChild(pop);
+    var popW = pop.offsetWidth, popH = pop.offsetHeight;
+    var left = x, top = y;
+    if(left + popW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - popW - 8);
+    if(top + popH > window.innerHeight - 8) top = Math.max(8, window.innerHeight - popH - 8);
+    pop.style.left = (window.scrollX + left) + 'px';
+    pop.style.top = (window.scrollY + top) + 'px';
+    openPop = pop;
+  }
+
+  document.querySelector('.pills').addEventListener('contextmenu', function(e){
+    var pill = e.target.closest('.pill[data-opt]');
+    if(!pill) return;
+    e.preventDefault();
+    openPillContextMenu(pill, e.clientX, e.clientY);
+  });
+
   var addOptionBtn = document.getElementById('addOptionBtn');
   if(addOptionBtn){
-    addOptionBtn.addEventListener('click', function(){
-      var activePanel = document.querySelector('.panel.on') || document.querySelector('.panel');
-      var d = getPanelDate(activePanel);
-      createOption(d.year, d.month);
+    addOptionBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      closePop();
+      var pop = document.createElement('div');
+      pop.className = 'itemmenu';
+      function menuRow(label, fn){
+        var r = document.createElement('div');
+        r.className = 'itemmenu-row';
+        r.textContent = label;
+        r.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          closePop();
+          fn();
+        });
+        pop.appendChild(r);
+      }
+      menuRow('+ Add option', function(){
+        var activePanel = document.querySelector('.panel.on') || document.querySelector('.panel');
+        var d = getPanelDate(activePanel);
+        createOption(d.year, d.month);
+      });
+      menuRow('+ Add holiday period', function(){
+        var activePanel = document.querySelector('.panel.on') || document.querySelector('.panel');
+        if(activePanel) addHolidayToPanel(activePanel);
+      });
+      positionPopover(pop, addOptionBtn);
     });
   }
 
@@ -1798,16 +1985,19 @@
     }
   });
 
-  // ---- initial attach ----
-  document.querySelectorAll(EDITABLE_SEL).forEach(makeEditable);
-  document.querySelectorAll('.acts li').forEach(attachItemControls);
-  document.querySelectorAll('.grid .cell').forEach(attachCellControls);
-  document.querySelectorAll('.panel').forEach(renderHoliday);
-  renderMonthSidebar();
-  (function(){
+  // ---- initial attach (also reused after an undo/redo restore, since
+  // replacing .wrap wholesale gives back plain markup with none of the
+  // dynamically-added controls or listeners wired up) ----
+  function reattachAll(){
+    document.querySelectorAll(EDITABLE_SEL).forEach(makeEditable);
+    document.querySelectorAll('.acts li').forEach(attachItemControls);
+    document.querySelectorAll('.grid .cell').forEach(attachCellControls);
+    document.querySelectorAll('.panel').forEach(renderHoliday);
+    renderMonthSidebar();
     var activePanel = document.querySelector('.panel.on') || document.querySelector('.panel');
     if(activePanel){ var d0 = getPanelDate(activePanel); filterPillsByMonth(d0.year, d0.month); }
-  })();
+  }
+  reattachAll();
 
   document.addEventListener('input', function(e){
     if(e.target.classList && e.target.classList.contains('price-val')){
@@ -2006,13 +2196,87 @@
     }
   }
 
+  // ---- undo/redo (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z): coarse, snapshot-based —
+  // captures a clean copy of .wrap + tagData (same shape as an autosave)
+  // once mutations settle, and restores by swapping .wrap back in and
+  // re-running reattachAll(). Simpler and more robust than tracking
+  // per-action diffs, at the cost of undo granularity being "a batch of
+  // changes that happened close together in time" rather than per-keystroke.
+  function captureUndoSnapshot(){
+    persistTags();
+    var wrapClone = document.querySelector('.wrap').cloneNode(true);
+    wrapClone.querySelectorAll('.jsctl').forEach(function(n){ n.remove(); });
+    wrapClone.querySelectorAll('.tagpop, .linkpop, .monthpop').forEach(function(n){ n.remove(); });
+    wrapClone.querySelectorAll(EDITABLE_SEL).forEach(function(el){ el.removeAttribute('contenteditable'); });
+    // Blank the transient "Editing…/Saved ✓" indicator — same as buildSaveHtml()
+    // — so its own lifecycle never registers as a real content change and
+    // pollutes the undo history with phantom no-op checkpoints.
+    var st = wrapClone.querySelector('#saveStatus');
+    if(st) st.textContent = '';
+    return { wrap: wrapClone.outerHTML, tagData: TAGDATA_EL.textContent };
+  }
+  function restoreUndoSnapshot(entry){
+    var parsed = new DOMParser().parseFromString(entry.wrap, 'text/html');
+    var newWrap = parsed.querySelector('.wrap');
+    var curWrap = document.querySelector('.wrap');
+    if(newWrap && curWrap) curWrap.replaceWith(newWrap);
+    TAGDATA_EL.textContent = entry.tagData;
+    try { TAGS = JSON.parse(entry.tagData); } catch(e){ TAGS = []; }
+    reattachAll();
+  }
+
+  var undoStack = [];
+  var redoStack = [];
+  var lastSnapshot = captureUndoSnapshot();
+  var undoTimer = null;
+  var restoringHistory = false;
+  var UNDO_MAX = 30;
+
+  function pushUndoIfChanged(){
+    if(restoringHistory) return;
+    var snap = captureUndoSnapshot();
+    if(snap.wrap === lastSnapshot.wrap && snap.tagData === lastSnapshot.tagData) return;
+    undoStack.push(lastSnapshot);
+    if(undoStack.length > UNDO_MAX) undoStack.shift();
+    lastSnapshot = snap;
+    redoStack = [];
+  }
+  function scheduleUndoSnapshot(){
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(pushUndoIfChanged, 600);
+  }
+
+  document.addEventListener('keydown', function(e){
+    var mod = e.metaKey || e.ctrlKey;
+    if(!mod || e.key.toLowerCase() !== 'z') return;
+    e.preventDefault();
+    clearTimeout(undoTimer);
+    pushUndoIfChanged();
+    restoringHistory = true;
+    if(e.shiftKey){
+      if(redoStack.length){
+        undoStack.push(lastSnapshot);
+        lastSnapshot = redoStack.pop();
+        restoreUndoSnapshot(lastSnapshot);
+      }
+    } else {
+      if(undoStack.length){
+        redoStack.push(lastSnapshot);
+        lastSnapshot = undoStack.pop();
+        restoreUndoSnapshot(lastSnapshot);
+      }
+    }
+    restoringHistory = false;
+    scheduleAutoSave();
+  });
+
   var mo = new MutationObserver(function(mutations){
     var relevant = mutations.some(function(m){
       var node = m.target;
       if(node.nodeType === 3) node = node.parentElement;
       return node && !node.closest(SAVE_EXCLUDE_SEL);
     });
-    if(relevant) scheduleAutoSave();
+    if(relevant){ scheduleAutoSave(); scheduleUndoSnapshot(); }
   });
   mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true,
     attributeFilter: ['style', 'class', 'data-links', 'data-img', 'href', 'src', 'data-holidays', 'data-year', 'data-month', 'data-icon', 'data-name'] });
