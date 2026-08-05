@@ -93,9 +93,10 @@
   .month-segment.current { box-shadow:3px 3px 0 rgba(0,0,0,.08), 6px 7px 16px rgba(0,0,0,.32);
     filter:brightness(1.1); z-index:1; }
   .month-segment.current::before {
-    content:''; position:absolute; inset:5px; pointer-events:none;
+    content:''; position:absolute; top:5px; right:5px; bottom:5px; left:0; pointer-events:none;
     border-radius:0 12px 12px 0;
     border:2px dashed rgba(255,255,255,.85);
+    border-left:none;
   }
   .seg-label { color:#fff; writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
     font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
@@ -580,7 +581,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-stitched-bookmark-indicator';
+  var BUILD_ID = 'build-2026-08-04-stitch-no-left-edge';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
