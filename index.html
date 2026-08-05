@@ -84,11 +84,13 @@
   .month-segment { position:relative; flex:1 1 0; min-height:64px; display:flex;
     align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
     border-radius:0 16px 16px 0; box-shadow:3px 3px 0 rgba(0,0,0,.06), 4px 5px 10px rgba(0,0,0,.22);
-    transition:transform .15s ease, box-shadow .15s ease; }
-  .month-segment:hover { transform:translateX(3px); box-shadow:3px 3px 0 rgba(0,0,0,.06), 5px 6px 14px rgba(0,0,0,.28); }
-  /* the segment matching whichever option is currently on screen — pulled
-     out a little further, like the bookmark actually in use */
-  .month-segment.current { transform:translateX(6px); box-shadow:3px 3px 0 rgba(0,0,0,.08), 6px 7px 16px rgba(0,0,0,.32); z-index:1; }
+    transition:box-shadow .15s ease, filter .15s ease; }
+  .month-segment:hover { box-shadow:3px 3px 0 rgba(0,0,0,.06), 5px 6px 14px rgba(0,0,0,.28); }
+  /* the segment matching whichever option is currently on screen — left
+     edge stays flush with the others (no horizontal shift), just a
+     brighter fill and deeper shadow so it still reads as "in use" */
+  .month-segment.current { box-shadow:3px 3px 0 rgba(0,0,0,.08), 6px 7px 16px rgba(0,0,0,.32);
+    filter:brightness(1.1); z-index:1; }
   .seg-label { color:#fff; writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
     font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
   .seg-add, .seg-remove { display:none; position:absolute; left:50%; transform:translateX(-50%); width:18px; height:18px;
@@ -572,7 +574,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-bookmark-tab-sidebar';
+  var BUILD_ID = 'build-2026-08-04-bookmark-tabs-left-aligned';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
