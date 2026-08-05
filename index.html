@@ -13,7 +13,7 @@
 </script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Travel Plan — August 2026</title>
+<title>Travel Planner</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect x=%272%27 y=%272%27 width=%2728%27 height=%2728%27 rx=%278%27 fill=%27%23f7f1ea%27/><path d=%27M 16.0,6.0 L 18.47,12.6 L 25.51,12.91 L 19.99,17.3 L 21.88,24.09 L 16.0,20.2 L 10.12,24.09 L 12.01,17.3 L 6.49,12.91 L 13.53,12.6 Z%27 fill=%27%23ef9a5c%27/></svg>">
 <style>
   :root { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92; }
@@ -55,6 +55,11 @@
   .chip { border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; display:inline-block; margin-bottom:3px; }
   .title { display:block; font-weight:600; }
   .line { display:block; color:var(--muted); }
+
+  /* a multi-day activity's read-only echo on the days after its start —
+     the real, editable copy only lives on the start day */
+  .act-span-ghost { opacity:.6; border:1px dashed var(--line); border-radius:8px; padding:4px 6px; cursor:default; }
+  .act-span-ghost .line { font-style:italic; }
   .price { display:block; font-weight:700; }
   .price em { font-style:normal; font-weight:400; color:var(--muted); }
   .cost { margin:8px 0 0; padding-top:6px; border-top:1px solid var(--line); font-size:11px; font-weight:700; color:var(--muted); }
@@ -74,6 +79,12 @@
   .month-segment { position:relative; flex:1 1 0; display:flex; align-items:center; justify-content:center;
     overflow:hidden; border-top:1px solid rgba(255,255,255,.25); cursor:pointer; }
   .month-segment:first-child { border-top:none; }
+  /* the segment matching whichever option is currently on screen — a
+     visible ring + brighter fill so "where am I" is never ambiguous */
+  .month-segment.current { box-shadow: inset 0 0 0 3px rgba(255,255,255,.95), 4px 0 14px rgba(0,0,0,.3);
+    filter: brightness(1.12); z-index: 1; }
+  .month-segment.current::after { content:''; position:absolute; top:0; bottom:0; right:0; width:4px;
+    background:#fff; }
   .seg-label { color:#fff; writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
     font-weight:800; font-size:15px; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
   .seg-add, .seg-remove { display:none; position:absolute; left:50%; transform:translateX(-50%); width:18px; height:18px;
@@ -527,7 +538,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-persist-fix-and-data-recovery';
+  var BUILD_ID = 'build-2026-08-04-batch-features-3';
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -667,6 +678,7 @@
 
     panel.querySelectorAll(':scope > .grid.week .cell').forEach(attachCellControls);
     renderHoliday(panel);
+    renderActivitySpans(panel);
   }
 
   function luminance(hex){
@@ -703,8 +715,14 @@
   });
 
   function parseMoney(str){
-    var m = String(str).replace(',', '.').match(/(-?\d+(\.\d+)?)/);
-    return m ? parseFloat(m[1]) : 0;
+    var s = String(str).replace(',', '.');
+    var m = s.match(/(-?\d+(\.\d+)?)/);
+    if(!m) return 0;
+    var base = parseFloat(m[1]);
+    // "€45x2" / "€45×2" means 45 per person/unit, times 2 — multiply into
+    // the total actually owed, since that's what a day total should reflect.
+    var multM = s.slice(m.index + m[0].length).match(/^\s*[x×]\s*(\d+(\.\d+)?)/i);
+    return multM ? base * parseFloat(multM[1]) : base;
   }
   function formatMoney(n){
     n = Math.round(n * 100) / 100;
@@ -1067,8 +1085,10 @@
     row('📷  Photo', function(){ pickImage(li); });
     row('✕  Delete activity', function(){
       var cell = li.closest('.cell');
+      var panel = cell.closest('.panel');
       li.remove();
       recomputeCell(cell);
+      if(panel) renderActivitySpans(panel);
     }, true);
 
     positionPopover(pop, anchorEl);
@@ -1133,6 +1153,78 @@
 
     li.appendChild(chip); li.appendChild(title); li.appendChild(line); li.appendChild(price);
     return li;
+  }
+
+  // ---- multi-day activities: writing a DD/MM-DD/MM range into an
+  // activity's time field extends it across those days. Unlike the holiday
+  // banner (an overlay spanning columns above the grid), this renders
+  // *inside* each day it touches — a read-only echo of the real activity
+  // (which still only lives, and is only editable, on its start day) so
+  // dragging/editing/pricing all stay unambiguous. Regenerated fresh from
+  // data-span-start/end on every relevant change, the same way the holiday
+  // banner is regenerated rather than kept in sync by hand. ----
+  function ensureActsList(cell){
+    var addBtn = cell.querySelector(':scope > .addact');
+    var acts = cell.querySelector(':scope > .acts');
+    if(!acts){
+      acts = document.createElement('ul');
+      acts.className = 'acts';
+      cell.insertBefore(acts, addBtn);
+    }
+    return acts;
+  }
+  function parseSpanFromLine(text){
+    var m = String(text).match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*-\s*(\d{1,2})\s*\/\s*(\d{1,2})/);
+    if(!m) return null;
+    var d1 = parseInt(m[1], 10), d2 = parseInt(m[3], 10);
+    if(!d1 || !d2 || d1 === d2) return null;
+    return d1 < d2 ? { start: d1, end: d2 } : { start: d2, end: d1 };
+  }
+  function updateActivitySpan(li){
+    var lineEl = li.querySelector(':scope > .line');
+    var span = lineEl ? parseSpanFromLine(lineEl.textContent) : null;
+    if(span){ li.dataset.spanStart = span.start; li.dataset.spanEnd = span.end; }
+    else { delete li.dataset.spanStart; delete li.dataset.spanEnd; }
+    var panel = li.closest('.panel');
+    if(panel) renderActivitySpans(panel);
+  }
+  function renderActivitySpans(panel){
+    panel.querySelectorAll('.act-span-ghost').forEach(function(g){ g.remove(); });
+    panel.querySelectorAll('.acts > li[data-span-start]').forEach(function(li){
+      var start = parseInt(li.dataset.spanStart, 10), end = parseInt(li.dataset.spanEnd, 10);
+      var originCell = li.closest('.cell');
+      var originDay = dayNumOfCell(originCell);
+      if(!start || !end) return;
+      for(var d = start; d <= end; d++){
+        if(d === originDay) continue;
+        var targetCell = null;
+        panel.querySelectorAll('.cell:not(.empty)').forEach(function(c){ if(dayNumOfCell(c) === d) targetCell = c; });
+        if(!targetCell) continue;
+        var acts = ensureActsList(targetCell);
+        var ghost = document.createElement('li');
+        ghost.className = 'act-span-ghost jsctl';
+        ghost.title = 'Continues from day ' + start + ' — edit it there';
+        var chip = li.querySelector(':scope > .chip');
+        if(chip){
+          var chipClone = document.createElement('span');
+          chipClone.className = 'chip';
+          chipClone.style.background = chip.style.background;
+          chipClone.style.color = chip.style.color;
+          chipClone.textContent = chip.textContent;
+          ghost.appendChild(chipClone);
+        }
+        var titleEl = li.querySelector(':scope > .title');
+        var titleSpan = document.createElement('span');
+        titleSpan.className = 'title';
+        titleSpan.textContent = titleEl ? titleEl.textContent : '';
+        ghost.appendChild(titleSpan);
+        var contSpan = document.createElement('span');
+        contSpan.className = 'line';
+        contSpan.textContent = '↔ continues';
+        ghost.appendChild(contSpan);
+        acts.appendChild(ghost);
+      }
+    });
   }
 
   // Drag one day onto another to swap their full content (location,
@@ -1200,6 +1292,8 @@
     recomputeCell(a); recomputeCell(b);
     var aClear = a.querySelector(':scope > .cleardaybtn'); if(aClear) aClear.classList.toggle('has-content', !!bLoc);
     var bClear = b.querySelector(':scope > .cleardaybtn'); if(bClear) bClear.classList.toggle('has-content', !!aLoc);
+    var swapPanel = a.closest('.panel');
+    if(swapPanel) renderActivitySpans(swapPanel);
   }
 
   // Drag an activity onto any day (or before/after another activity on the
@@ -1276,6 +1370,8 @@
           refreshHoliCell(actDrag.originCell);
         }
       }
+      var actPanel = newCell.closest('.panel');
+      if(actPanel) renderActivitySpans(actPanel);
     }
     actDrag = null;
     document.removeEventListener('pointermove', onActDragMove);
@@ -1732,6 +1828,7 @@
     clone.querySelectorAll('.grid .cell').forEach(attachCellControls);
     clone.querySelectorAll('.acts li').forEach(attachItemControls);
     renderHoliday(clone);
+    renderActivitySpans(clone);
     renderMonthSidebar();
     var d = getPanelDate(clone);
     filterPillsByMonth(d.year, d.month);
@@ -1832,6 +1929,10 @@
       firstMatch.classList.add('on');
       document.getElementById('panel-' + firstMatch.getAttribute('data-opt')).classList.add('on');
     }
+    var curKey = monthKey(year, month);
+    document.querySelectorAll('.month-segment').forEach(function(seg){
+      seg.classList.toggle('current', seg.dataset.monthKey === curKey);
+    });
   }
 
   function removeMonth(year, month){
@@ -1904,9 +2005,12 @@
       var key = monthKey(d.year, d.month);
       if(!seen.some(function(s){ return s.key === key; })) seen.push({ key: key, year: d.year, month: d.month });
     });
+    var activePanel = document.querySelector('.panel.on');
+    var activeKey = activePanel ? monthKey(getPanelDate(activePanel).year, getPanelDate(activePanel).month) : null;
     seen.forEach(function(s, idx){
       var seg = document.createElement('div');
-      seg.className = 'month-segment';
+      seg.className = 'month-segment' + (s.key === activeKey ? ' current' : '');
+      seg.dataset.monthKey = s.key;
       seg.style.background = SEG_COLORS[idx % SEG_COLORS.length];
       seg.title = 'Click to show only this month\'s options';
       seg.addEventListener('click', function(){ filterPillsByMonth(s.year, s.month); });
@@ -1990,6 +2094,7 @@
     document.querySelectorAll('.acts li').forEach(attachItemControls);
     document.querySelectorAll('.grid .cell').forEach(attachCellControls);
     document.querySelectorAll('.panel').forEach(renderHoliday);
+    document.querySelectorAll('.panel').forEach(renderActivitySpans);
     renderMonthSidebar();
     var activePanel = document.querySelector('.panel.on') || document.querySelector('.panel');
     if(activePanel){ var d0 = getPanelDate(activePanel); filterPillsByMonth(d0.year, d0.month); }
@@ -2000,6 +2105,10 @@
     if(e.target.classList && e.target.classList.contains('price-val')){
       var cell = e.target.closest('.cell');
       if(cell) recomputeCell(cell);
+    }
+    if(e.target.classList && e.target.classList.contains('line')){
+      var li = e.target.closest('.acts > li');
+      if(li) updateActivitySpan(li);
     }
   });
 
@@ -2100,10 +2209,12 @@
   async function doSave(){
     var htmlStr = buildSaveHtml();
 
+    // Background autosave (below) already keeps local storage current on
+    // every edit — this button is just for grabbing a portable file copy,
+    // so it doesn't need to duplicate that write.
     if(IS_HOSTED){
-      var ok = saveToLocalStorage(htmlStr);
       downloadCopy(htmlStr);
-      setStatus(ok ? 'Saved locally + downloaded ✓' : 'Downloaded (local storage full) ✓', true);
+      setStatus('Downloaded ✓', true);
       return;
     }
 
@@ -2277,6 +2388,33 @@
   });
   mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true,
     attributeFilter: ['style', 'class', 'data-links', 'data-img', 'href', 'src', 'data-holidays', 'data-year', 'data-month', 'data-icon', 'data-name'] });
+
+  // ---- cross-tab live sync: the 'storage' event fires in every OTHER tab
+  // on this origin whenever one tab's autosave writes to localStorage, so
+  // open tabs stay in sync without a manual reload. Skips the restore when
+  // the incoming content is already identical to avoid a redundant
+  // restore -> re-save -> storage-event ping-pong between tabs. ----
+  window.addEventListener('storage', function(e){
+    if(e.key !== LS_KEY || !e.newValue) return;
+    try{
+      var entry = JSON.parse(e.newValue);
+      if(!entry || !entry.html) return;
+      var parsed = new DOMParser().parseFromString(entry.html, 'text/html');
+      var newWrap = parsed.querySelector('.wrap');
+      if(!newWrap || newWrap.outerHTML === lastSnapshot.wrap) return;
+      var newTagData = parsed.getElementById('tagData');
+      restoringHistory = true;
+      document.querySelector('.wrap').replaceWith(newWrap);
+      if(newTagData){
+        TAGDATA_EL.textContent = newTagData.textContent;
+        try { TAGS = JSON.parse(newTagData.textContent); } catch(err){ TAGS = []; }
+      }
+      reattachAll();
+      lastSnapshot = captureUndoSnapshot();
+      restoringHistory = false;
+      setStatus('Synced from another tab ✓', true);
+    } catch(err){}
+  });
 
   if(!IS_HOSTED){
     (async function initHandle(){
