@@ -250,6 +250,13 @@
     .grid.banner-row .banner { grid-column: 1 !important; }
     .cellhead { gap: 8px; }
   }
+
+  .restore-banner { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:80;
+    background:var(--ink); color:#fff; border-radius:10px; padding:12px 14px; box-shadow:0 10px 28px rgba(0,0,0,.3);
+    display:flex; align-items:center; gap:12px; max-width:min(90vw, 520px); font-size:13px; }
+  .restore-banner button { border:none; border-radius:6px; padding:7px 12px; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .restore-banner .restore-yes { background:var(--primary); color:#fff; }
+  .restore-banner .restore-no { background:rgba(255,255,255,.15); color:#fff; }
 </style>
 </head>
 <body>
@@ -538,7 +545,19 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-batch-features-3';
+  var BUILD_ID = 'build-2026-08-04-stale-cache-banner';
+
+  // Bumped ONLY when the published *content* baseline is intentionally
+  // overridden from outside the normal edit flow (e.g. restoring lost trip
+  // data, as happened here) — never on a routine code deploy. A locally
+  // saved copy tagged with a different (or missing) CONTENT_ID might be
+  // stale relative to a baseline change like that, so it's held for
+  // confirmation (see the banner wired up further down) instead of either
+  // auto-restoring it (which could silently re-mask the very fix that was
+  // just published) or discarding it (which is exactly the data-loss bug
+  // this whole mechanism exists to prevent).
+  var CONTENT_ID = 'poland-recovery-1';
+  var pendingLocalSave = null;
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -554,16 +573,11 @@
       if(raw){
         var entry = null;
         try { entry = JSON.parse(raw); } catch(e){ entry = null; }
-        // Always restore saved edits, regardless of which build they were
-        // saved under — a newer deploy changes the JS, not the shape of a
-        // user's own content, and reattachAll() below is written to tolerate
-        // older markup (see e.g. getPanelDate's fallback, getHolidays'
-        // legacy-attribute migration). A stale-cache-masks-new-features risk
-        // is a far smaller cost than silently discarding someone's edits,
-        // which is what this used to do on every build bump (never do that
-        // again — a real user lost real trip content to it).
         var html = entry && entry.html ? entry.html : (typeof raw === 'string' && raw.indexOf('<') === 0 ? raw : null);
-        if(html){
+        if(html && entry && entry.contentId === CONTENT_ID){
+          // Same content baseline as when this was saved — safe to restore
+          // silently, exactly like a normal build-to-build autosave always
+          // should be (never discard edits just because the code changed).
           var parsed = new DOMParser().parseFromString(html, 'text/html');
           var newWrap = parsed.querySelector('.wrap');
           var curWrap = document.querySelector('.wrap');
@@ -571,6 +585,11 @@
           var newTagData = parsed.getElementById('tagData');
           var curTagData = document.getElementById('tagData');
           if(newTagData && curTagData) curTagData.textContent = newTagData.textContent;
+        } else if(html){
+          // Missing/older contentId: don't know whether this predates a
+          // baseline change. Leave the fresh content showing and let the
+          // user decide via the banner below, instead of guessing.
+          pendingLocalSave = html;
         }
       }
     } catch(e){}
@@ -2101,6 +2120,40 @@
   }
   reattachAll();
 
+  // A locally-saved copy from before this content baseline was published
+  // (see CONTENT_ID above) is sitting unapplied — ask instead of guessing,
+  // so neither the user's own edits nor an intentional content fix can get
+  // silently clobbered by the other.
+  if(pendingLocalSave){
+    var banner = document.createElement('div');
+    banner.className = 'restore-banner';
+    var msg = document.createElement('span');
+    msg.textContent = 'Found a version of this plan saved in your browser that doesn’t match what’s shown below.';
+    banner.appendChild(msg);
+    var restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button'; restoreBtn.className = 'restore-yes'; restoreBtn.textContent = 'Restore it';
+    var dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button'; dismissBtn.className = 'restore-no'; dismissBtn.textContent = 'Keep this version';
+    restoreBtn.addEventListener('click', function(){
+      var parsed = new DOMParser().parseFromString(pendingLocalSave, 'text/html');
+      var newWrap = parsed.querySelector('.wrap');
+      var curWrap = document.querySelector('.wrap');
+      if(newWrap && curWrap) curWrap.replaceWith(newWrap);
+      var newTagData = parsed.getElementById('tagData');
+      if(newTagData){
+        TAGDATA_EL.textContent = newTagData.textContent;
+        try { TAGS = JSON.parse(newTagData.textContent); } catch(err){ TAGS = []; }
+      }
+      reattachAll();
+      banner.remove();
+      scheduleAutoSave();
+    });
+    dismissBtn.addEventListener('click', function(){ banner.remove(); });
+    banner.appendChild(restoreBtn);
+    banner.appendChild(dismissBtn);
+    document.body.appendChild(banner);
+  }
+
   document.addEventListener('input', function(e){
     if(e.target.classList && e.target.classList.contains('price-val')){
       var cell = e.target.closest('.cell');
@@ -2202,7 +2255,7 @@
   }
 
   function saveToLocalStorage(htmlStr){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify({ build: BUILD_ID, html: htmlStr })); return true; }
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({ build: BUILD_ID, contentId: CONTENT_ID, html: htmlStr })); return true; }
     catch(err){ return false; }
   }
 
