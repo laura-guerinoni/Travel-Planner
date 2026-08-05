@@ -540,6 +540,24 @@
     "name": "Flight",
     "bg": "#7a6ec9",
     "fg": "#ffffff"
+  },
+  {
+    "icon": "🚌",
+    "name": "Bus",
+    "bg": "#3fd96d",
+    "fg": "#14213d"
+  },
+  {
+    "icon": "⛴️",
+    "name": "Boat",
+    "bg": "#3d84a8",
+    "fg": "#ffffff"
+  },
+  {
+    "icon": "🚲",
+    "name": "Bike",
+    "bg": "#e2b33c",
+    "fg": "#14213d"
   }
 ]
 </script>
@@ -551,7 +569,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-fix-filter-css-specificity';
+  var BUILD_ID = 'build-2026-08-04-per-month-numbering-and-transport-tags';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -1230,8 +1248,16 @@
     if(panel) renderActivitySpans(panel);
   }
   function renderActivitySpans(panel){
-    panel.querySelectorAll('.act-span-ghost').forEach(function(g){ g.remove(); });
+    // Cells that currently hold a ghost need recomputing even if their
+    // origin activity was just deleted — otherwise the ghost disappears
+    // but the split-cost day total it was contributing to is never
+    // refreshed, leaving a stale number with nothing left to explain it.
     var touchedCells = [];
+    panel.querySelectorAll('.act-span-ghost').forEach(function(g){
+      var c = g.closest('.cell');
+      if(c) touchedCells.push(c);
+      g.remove();
+    });
     panel.querySelectorAll('.acts > li[data-span-start]').forEach(function(li){
       var start = parseInt(li.dataset.spanStart, 10), end = parseInt(li.dataset.spanEnd, 10);
       var originCell = li.closest('.cell');
@@ -1803,7 +1829,9 @@
 
   function createOption(year, month){
     var panels = document.querySelectorAll('.panel');
-    var n = panels.length + 1;
+    var n = panels.length + 1; // internal id, must stay globally unique across all months
+    var displayNum = 1; // the "1.", "2." shown to the user — counts only within this month
+    panels.forEach(function(p){ var d = getPanelDate(p); if(d.year === year && d.month === month) displayNum++; });
     var template = panels[0];
     var clone = template.cloneNode(true);
     clone.id = 'panel-option-' + n;
@@ -1825,7 +1853,7 @@
     var newPill = document.createElement('button');
     newPill.type = 'button'; newPill.className = 'pill';
     newPill.setAttribute('data-opt', 'option-' + n);
-    newPill.innerHTML = '<span class="pill-name">' + n + '. New option</span> <span class="pill-price">€0</span>' +
+    newPill.innerHTML = '<span class="pill-name">' + displayNum + '. New option</span> <span class="pill-price">€0</span>' +
       '<span class="pill-remove" title="Remove option">&times;</span>';
     pillsWrap.insertBefore(newPill, document.getElementById('addOptionBtn'));
     wirePill(newPill);
@@ -1833,7 +1861,7 @@
     var budgetList = document.querySelector('.budget ul');
     var li = document.createElement('li');
     li.setAttribute('data-opt', 'option-' + n);
-    li.innerHTML = '<span><span class="budget-name">' + n + '. New option</span></span><strong>€0</strong>';
+    li.innerHTML = '<span><span class="budget-name">' + displayNum + '. New option</span></span><strong>€0</strong>';
     budgetList.appendChild(li);
 
     clone.querySelectorAll('.grid .cell').forEach(attachCellControls);
