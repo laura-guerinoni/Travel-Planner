@@ -74,19 +74,23 @@
   .fine { color:var(--muted); font-size:12px; margin:10px 0 0; }
   footer { margin-top:28px; text-align:center; color:var(--muted); font-size:13px; }
   @media print { body { background:#fff; padding:0; } .panel { display:block !important; } .pills { display:none; } }
-  .month-sidebar { position:fixed; left:0; top:0; bottom:0; width:40px; z-index:30; display:flex;
-    flex-direction:column; box-shadow:2px 0 6px rgba(0,0,0,.08); }
-  .month-segment { position:relative; flex:1 1 0; display:flex; align-items:center; justify-content:center;
-    overflow:hidden; border-top:1px solid rgba(255,255,255,.25); cursor:pointer; }
-  .month-segment:first-child { border-top:none; }
-  /* the segment matching whichever option is currently on screen — a
-     visible ring + brighter fill so "where am I" is never ambiguous */
-  .month-segment.current { box-shadow: inset 0 0 0 3px rgba(255,255,255,.95), 4px 0 14px rgba(0,0,0,.3);
-    filter: brightness(1.12); z-index: 1; }
-  .month-segment.current::after { content:''; position:absolute; top:0; bottom:0; right:0; width:4px;
-    background:#fff; }
+  /* Styled like the little fabric/paper page-marker tabs that stick out
+     from the edge of a book — separate rounded tabs with a gap of page
+     showing between them, each with its own drop shadow so it reads as
+     physically resting on top of the page, rather than one continuous
+     colored bar running the full height. */
+  .month-sidebar { position:fixed; left:0; top:28px; width:46px; z-index:30; display:flex;
+    flex-direction:column; gap:14px; height:calc(100vh - 56px); }
+  .month-segment { position:relative; flex:1 1 0; min-height:64px; display:flex;
+    align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
+    border-radius:0 16px 16px 0; box-shadow:3px 3px 0 rgba(0,0,0,.06), 4px 5px 10px rgba(0,0,0,.22);
+    transition:transform .15s ease, box-shadow .15s ease; }
+  .month-segment:hover { transform:translateX(3px); box-shadow:3px 3px 0 rgba(0,0,0,.06), 5px 6px 14px rgba(0,0,0,.28); }
+  /* the segment matching whichever option is currently on screen — pulled
+     out a little further, like the bookmark actually in use */
+  .month-segment.current { transform:translateX(6px); box-shadow:3px 3px 0 rgba(0,0,0,.08), 6px 7px 16px rgba(0,0,0,.32); z-index:1; }
   .seg-label { color:#fff; writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
-    font-weight:800; font-size:15px; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
+    font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase; cursor:pointer; white-space:nowrap; }
   .seg-add, .seg-remove { display:none; position:absolute; left:50%; transform:translateX(-50%); width:18px; height:18px;
     border-radius:50%; border:none; background:rgba(255,255,255,.9); color:var(--ink); font-weight:800; font-size:12px;
     line-height:18px; padding:0; cursor:pointer; }
@@ -494,7 +498,6 @@
   <h2>Budget overview</h2>
   <div class="budget">
     <ul><li data-opt="option-3"><span><span class="budget-name">1.Poland</span></span><strong>€186</strong></li><li data-opt="option-1"><span><span class="budget-name">1. Slovakia · Hungary · Poland</span> <em>· August 12 – 25, 2026</em></span><strong>€997</strong></li><li data-opt="option-2"><span><span class="budget-name">2. Hungary · Poland</span> <em>· August 15 – 24, 2026</em></span><strong>€786</strong></li></ul>
-    <p class="fine">Estimates per person: trains, festival tickets, thermal bath, accommodation and the flight. Food and drinks not included.</p>
   </div>
 </div>
 <script id="tagData" type="application/json">
@@ -569,7 +572,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-merge-default-tags';
+  var BUILD_ID = 'build-2026-08-04-bookmark-tab-sidebar';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
