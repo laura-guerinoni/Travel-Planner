@@ -569,7 +569,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-per-month-numbering-and-transport-tags';
+  var BUILD_ID = 'build-2026-08-04-merge-default-tags';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -582,6 +582,11 @@
   // this whole mechanism exists to prevent).
   var CONTENT_ID = 'poland-recovery-1';
   var pendingLocalSave = null;
+  // Captured before any restore touches #tagData, so new default tags
+  // (e.g. transport modes added after someone already has their own saved
+  // tag list) can be merged in below rather than silently lost — a saved
+  // tag list should never mean missing out on new built-in options.
+  var DEFAULT_TAGS_JSON = document.getElementById('tagData').textContent;
 
   // On a hosted (http/https) page, restore the last autosaved version from
   // localStorage before anything else runs, so the rest of this script's
@@ -623,6 +628,20 @@
   var TAGDATA_EL = document.getElementById('tagData');
   var TAGS = [];
   try { TAGS = JSON.parse(TAGDATA_EL.textContent); } catch(e){ TAGS = []; }
+
+  (function mergeDefaultTags(){
+    try {
+      var defaults = JSON.parse(DEFAULT_TAGS_JSON);
+      var existingKeys = {};
+      TAGS.forEach(function(t){ existingKeys[t.icon + '|' + t.name] = true; });
+      var added = false;
+      defaults.forEach(function(t){
+        var key = t.icon + '|' + t.name;
+        if(!existingKeys[key]){ TAGS.push(t); existingKeys[key] = true; added = true; }
+      });
+      if(added) TAGDATA_EL.textContent = JSON.stringify(TAGS, null, 2);
+    } catch(e){}
+  })();
 
   var EDITABLE_SEL = '.title, .line, .loc, .price-val, .price-note, .pill-name, .budget-name';
 
