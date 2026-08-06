@@ -14,7 +14,7 @@
   // visibility hide above, just for the theme instead of the content.
   try {
     var savedTheme = localStorage.getItem('travelPlannerTheme');
-    if (savedTheme === 'kawaii') document.documentElement.setAttribute('data-theme', 'kawaii');
+    if (savedTheme === 'classic') document.documentElement.setAttribute('data-theme', 'classic');
   } catch(e){}
 })();
 </script>
@@ -23,19 +23,20 @@
 <title>Travel Planner</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect x=%272%27 y=%272%27 width=%2728%27 height=%2728%27 rx=%278%27 fill=%27%23f7f1ea%27/><path d=%27M 16.0,6.0 L 18.47,12.6 L 25.51,12.91 L 19.99,17.3 L 21.88,24.09 L 16.0,20.2 L 10.12,24.09 L 12.01,17.3 L 6.49,12.91 L 13.53,12.6 Z%27 fill=%27%23ef9a5c%27/></svg>">
 <style>
-  :root { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92;
-    /* Plain-weave grid (vertical + horizontal threads), not a diagonal
-       crosshatch — closer to an actual woven-linen look. */
-    --texture: repeating-linear-gradient(0deg, rgba(28,52,56,.045) 0, rgba(28,52,56,.045) 1px, transparent 1px, transparent 5px),
-      repeating-linear-gradient(90deg, rgba(28,52,56,.045) 0, rgba(28,52,56,.045) 1px, transparent 1px, transparent 5px); }
-  /* A second, more vivid/joyful palette — pink, mint, and warm coral lifted
-     from a kawaii-style reference — swapped in wholesale via [data-theme]
-     rather than touching any component's own CSS, since every component
-     already reads its colors from these same custom properties. */
-  :root[data-theme="kawaii"] { --bg:#f6f1fb; --card:#ffffff; --ink:#3d3568; --muted:#9b8fc0; --line:#ecdff5;
+  /* Vivid/joyful palette — pink, mint, and warm coral lifted from a kawaii-style
+     reference — is now the main default. Plain-weave grid texture kept very
+     faint (low opacity) so it stays a soft hint rather than visible lines. */
+  :root { --bg:#f6f1fb; --card:#ffffff; --ink:#3d3568; --muted:#9b8fc0; --line:#ecdff5;
     --primary:#ec6a9c; --primary-rgb:236,106,156; --secondary:#3fbf94; --secondary-rgb:63,191,148; --accent:#f2884d; --accent-rgb:242,136,77;
-    --texture: repeating-linear-gradient(0deg, rgba(61,53,104,.05) 0, rgba(61,53,104,.05) 1px, transparent 1px, transparent 5px),
-      repeating-linear-gradient(90deg, rgba(61,53,104,.05) 0, rgba(61,53,104,.05) 1px, transparent 1px, transparent 5px); }
+    --texture: repeating-linear-gradient(0deg, rgba(61,53,104,.016) 0, rgba(61,53,104,.016) 1px, transparent 1px, transparent 5px),
+      repeating-linear-gradient(90deg, rgba(61,53,104,.016) 0, rgba(61,53,104,.016) 1px, transparent 1px, transparent 5px); }
+  /* The original classic teal/mint/orange palette is now the secondary
+     option, swapped in wholesale via [data-theme] rather than touching any
+     component's own CSS, since every component already reads its colors
+     from these same custom properties. */
+  :root[data-theme="classic"] { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92;
+    --texture: repeating-linear-gradient(0deg, rgba(28,52,56,.016) 0, rgba(28,52,56,.016) 1px, transparent 1px, transparent 5px),
+      repeating-linear-gradient(90deg, rgba(28,52,56,.016) 0, rgba(28,52,56,.016) 1px, transparent 1px, transparent 5px); }
   * { box-sizing:border-box; }
   /* A very faint woven-linen crosshatch under the flat page background —
      just enough to hint at fabric/embroidery without ever competing with
@@ -351,15 +352,15 @@
     padding:0; transition:transform .15s ease, border-color .15s ease; }
   .theme-dot:hover { transform:scale(1.1); }
   .theme-dot.active { border-color:var(--ink); box-shadow:0 0 0 2px var(--card); }
-  .theme-dot[data-theme-name="default"] { background: conic-gradient(#1c6672 0deg 120deg, #1fa896 120deg 240deg, #ef9a5c 240deg 360deg); }
   .theme-dot[data-theme-name="kawaii"] { background: conic-gradient(#ec6a9c 0deg 120deg, #3fbf94 120deg 240deg, #f2884d 240deg 360deg); }
+  .theme-dot[data-theme-name="classic"] { background: conic-gradient(#1c6672 0deg 120deg, #1fa896 120deg 240deg, #ef9a5c 240deg 360deg); }
 </style>
 </head>
 <body>
 <div id="monthSidebar" class="month-sidebar"></div>
 <div class="theme-switcher" id="themeSwitcher">
-  <button type="button" class="theme-dot" data-theme-name="default" title="Classic palette"></button>
   <button type="button" class="theme-dot" data-theme-name="kawaii" title="Kawaii palette"></button>
+  <button type="button" class="theme-dot" data-theme-name="classic" title="Classic palette"></button>
 </div>
 <div class="wrap">
   <header>
@@ -662,7 +663,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-theme-switcher';
+  var BUILD_ID = 'build-2026-08-06-kawaii-default-soft-texture';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -2370,7 +2371,7 @@
   // a reload never flashes the other palette first.
   var THEME_KEY = 'travelPlannerTheme';
   function applyTheme(name){
-    if(name === 'kawaii') document.documentElement.setAttribute('data-theme', 'kawaii');
+    if(name === 'classic') document.documentElement.setAttribute('data-theme', 'classic');
     else document.documentElement.removeAttribute('data-theme');
     document.querySelectorAll('.theme-dot').forEach(function(d){
       d.classList.toggle('active', d.getAttribute('data-theme-name') === name);
@@ -2381,8 +2382,8 @@
     dot.addEventListener('click', function(){ applyTheme(dot.getAttribute('data-theme-name')); });
   });
   (function initTheme(){
-    var saved = 'default';
-    try { saved = localStorage.getItem(THEME_KEY) || 'default'; } catch(e){}
+    var saved = 'kawaii';
+    try { saved = localStorage.getItem(THEME_KEY) || 'kawaii'; } catch(e){}
     applyTheme(saved);
   })();
 
