@@ -596,7 +596,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-pill-bookmark-tabs';
+  var BUILD_ID = 'build-2026-08-06-strip-stale-fine-note';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -2246,6 +2246,12 @@
   // replacing .wrap wholesale gives back plain markup with none of the
   // dynamically-added controls or listeners wired up) ----
   function reattachAll(){
+    // The old "Estimates per person..." disclaimer under Budget overview
+    // was removed from the template, but a browser with an older cached
+    // copy (local storage or plain HTTP cache) can still restore it —
+    // strip it defensively every time content gets (re)applied, regardless
+    // of where that content came from.
+    document.querySelectorAll('.fine').forEach(function(el){ el.remove(); });
     document.querySelectorAll(EDITABLE_SEL).forEach(makeEditable);
     document.querySelectorAll('.acts li').forEach(attachItemControls);
     document.querySelectorAll('.grid .cell').forEach(attachCellControls);
