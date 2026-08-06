@@ -24,10 +24,25 @@
   header { text-align:center; margin-bottom:20px; }
   h1 { margin:0 0 10px; font-size:34px; }
   .pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  /* Second-tier bookmarks: same tab-hanging-off-an-edge idea as the month
+     sidebar, just smaller and hanging off the TOP edge instead of the
+     left — rounded only at the bottom (the edge pointing away from what
+     they're attached to), with a shallower shadow than the sidebar's
+     tabs so the hierarchy (sidebar = month, pills = option within it)
+     reads at a glance. */
   .pill { cursor:pointer; font:inherit; font-size:14px; font-weight:600; border:1px solid var(--line);
-    background:var(--card); color:var(--ink); border-radius:999px; padding:9px 16px; }
+    background:var(--card); color:var(--ink); border-radius:0 0 12px 12px; padding:9px 16px 11px;
+    box-shadow:0 2px 0 rgba(0,0,0,.04), 0 3px 6px rgba(0,0,0,.1); }
   .pill span { opacity:.7; font-weight:700; }
-  .pill.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .pill.on { background:var(--primary); border-color:var(--primary); color:#fff;
+    box-shadow:0 2px 0 rgba(0,0,0,.06), 0 4px 10px rgba(0,0,0,.18); }
+  /* the selected option's stitch — open on top, since that's the edge
+     it's "hanging" from, mirroring the sidebar's own current-tab treatment */
+  .pill.on::after {
+    content:''; position:absolute; left:4px; right:4px; bottom:4px; top:0; pointer-events:none;
+    border-radius:0 0 9px 9px;
+    border:2px dashed rgba(255,255,255,.85); border-top:none;
+  }
   .panel { display:none; }
   .panel.on { display:block; }
   .kicker { text-transform:uppercase; letter-spacing:.14em; font-size:12px; color:var(--muted); margin:20px 0 0; text-align:center; }
@@ -581,7 +596,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-04-stitch-no-left-edge';
+  var BUILD_ID = 'build-2026-08-06-pill-bookmark-tabs';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
