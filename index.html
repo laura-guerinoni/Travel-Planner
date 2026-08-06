@@ -18,12 +18,24 @@
 <style>
   :root { --bg:#f7f1ea; --card:#ffffff; --ink:#1c3438; --muted:#9c8b86; --line:#e8dcd5; --primary:#1c6672; --primary-rgb:28,102,114; --secondary:#1fa896; --secondary-rgb:31,168,150; --accent:#ef9a5c; --accent-rgb:239,154,92; }
   * { box-sizing:border-box; }
-  body { margin:0; padding:32px 16px 32px 56px; background:var(--bg); color:var(--ink);
+  /* A very faint woven-linen crosshatch under the flat page background —
+     just enough to hint at fabric/embroidery without ever competing with
+     the actual content sitting on top of it. */
+  body { margin:0; padding:32px 16px 32px 56px; background-color:var(--bg); color:var(--ink);
+    background-image:
+      repeating-linear-gradient(45deg, rgba(28,52,56,.045) 0, rgba(28,52,56,.045) 1px, transparent 1px, transparent 5px),
+      repeating-linear-gradient(-45deg, rgba(28,52,56,.045) 0, rgba(28,52,56,.045) 1px, transparent 1px, transparent 5px);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
   .wrap { max-width:1120px; margin:0 auto; }
   header { text-align:center; margin-bottom:20px; }
   h1 { margin:0 0 10px; font-size:34px; }
-  .pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  /* Flush to the very top of the viewport, same as the sidebar is flush
+     to the left — .wrap's padding-top is kept in sync with this bar's
+     real (dynamic) height via JS, since pills can wrap to more than one
+     row as options are added. */
+  .pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    position:fixed; top:0; left:46px; right:16px; z-index:40;
+    background:var(--bg); padding:12px 8px 14px; }
   /* Second-tier bookmarks: same tab-hanging-off-an-edge idea as the month
      sidebar, just smaller and hanging off the TOP edge instead of the
      left — rounded only at the bottom (the edge pointing away from what
@@ -153,7 +165,6 @@
   .save-status { font-size:11px; color:var(--muted); text-align:right; max-width:160px; min-height:14px; }
   .save-status.changelink { text-decoration:underline; cursor:pointer; }
 
-  .pills { position:relative; }
   .pill { position:relative; display:inline-flex; align-items:center; gap:6px; cursor:grab; touch-action:none; }
   .pill.dragging { opacity:.55; cursor:grabbing; }
   .pill-name { outline:none; }
@@ -271,12 +282,27 @@
      every .grid to a single column makes the whole month stack top-to-bottom
      in the correct day order for free — no reordering needed. ---- */
   @media (max-width: 720px) {
-    body { padding: 16px 10px 16px 34px; }
-    .month-sidebar { width: 26px; }
-    .seg-label { font-size: 11px; letter-spacing: .08em; }
+    body { padding: 16px 10px; }
+    /* The month sidebar becomes a horizontal bar flush to the top instead
+       of a vertical strip on the left — same primary bookmark, just
+       rotated to hang from the top edge; scrolls sideways if there are
+       more months than fit. Pills (secondary bookmarks) stack directly
+       below it — JS keeps both bars' exact heights in sync via
+       syncBarLayout() since month/option counts change dynamically. */
+    .month-sidebar { position:fixed; top:0; left:0; right:0; width:auto; height:auto;
+      flex-direction:row; gap:8px; padding:0 8px 8px; overflow-x:auto; z-index:35; }
+    .month-segment { flex:0 0 auto; min-width:88px; min-height:0; padding:10px 8px;
+      border-radius:0 0 14px 14px; box-shadow:0 3px 0 rgba(0,0,0,.06), 0 4px 10px rgba(0,0,0,.22); }
+    .seg-label { writing-mode:horizontal-tb; transform:none; font-size:12px; letter-spacing:.05em; }
+    .month-segment.current::before { top:0; right:5px; bottom:5px; left:5px;
+      border-radius:0 0 11px 11px; border-width:2px; border-color:rgba(255,255,255,.85);
+      border-style:none dashed dashed dashed; }
+    .seg-add { top:50%; left:4px; bottom:auto; transform:translateY(-50%); }
+    .seg-remove { top:50%; right:4px; left:auto; bottom:auto; transform:translateY(-50%); }
+
+    .pills { left:0; right:0; gap: 6px; padding:8px 8px 10px; }
+    .pill { font-size: 13px; padding: 8px 12px 10px; }
     .icontoolbar { top: 10px; right: 10px; }
-    .pills { gap: 6px; }
-    .pill { font-size: 13px; padding: 8px 12px; }
     h1 { font-size: 26px; }
     .grid.heads { display: none; }
     .grid { grid-template-columns: 1fr; gap: 8px; }
@@ -596,7 +622,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-strip-stale-fine-note';
+  var BUILD_ID = 'build-2026-08-06-colored-tabs-and-texture';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -2151,6 +2177,24 @@
     positionPopover(pop, anchorEl);
   }
 
+  // Both bars are position:fixed with content-driven heights (pills wrap
+  // to more rows as options are added; the month bar can wrap to two rows
+  // on narrow phones with several months) — .wrap's clearance and, on
+  // mobile, where the pills bar starts, are kept in sync here rather than
+  // hardcoded, since either bar's real height changes at runtime.
+  function syncBarLayout(){
+    var sidebarEl = document.getElementById('monthSidebar');
+    var pillsEl = document.querySelector('.pills');
+    var wrapEl = document.querySelector('.wrap');
+    if(!pillsEl || !wrapEl) return;
+    var isMobile = window.matchMedia('(max-width:720px)').matches;
+    var sidebarH = (isMobile && sidebarEl) ? sidebarEl.getBoundingClientRect().height : 0;
+    pillsEl.style.top = sidebarH + 'px';
+    var pillsH = pillsEl.getBoundingClientRect().height;
+    wrapEl.style.paddingTop = (sidebarH + pillsH + 16) + 'px';
+  }
+  window.addEventListener('resize', syncBarLayout);
+
   function renderMonthSidebar(){
     var sidebar = document.getElementById('monthSidebar');
     if(!sidebar) return;
@@ -2163,11 +2207,14 @@
     });
     var activePanel = document.querySelector('.panel.on');
     var activeKey = activePanel ? monthKey(getPanelDate(activePanel).year, getPanelDate(activePanel).month) : null;
+    var colorByKey = {};
     seen.forEach(function(s, idx){
       var seg = document.createElement('div');
       seg.className = 'month-segment' + (s.key === activeKey ? ' current' : '');
       seg.dataset.monthKey = s.key;
-      seg.style.background = SEG_COLORS[idx % SEG_COLORS.length];
+      var segColor = SEG_COLORS[idx % SEG_COLORS.length];
+      colorByKey[s.key] = segColor;
+      seg.style.background = segColor;
       seg.title = 'Click to show only this month\'s options';
       seg.addEventListener('click', function(){ filterPillsByMonth(s.year, s.month); });
 
@@ -2217,6 +2264,19 @@
 
       sidebar.appendChild(seg);
     });
+    // Every option pill gets the exact same fill as its own month's
+    // sidebar tab (not just the active one) — the pill's own selected
+    // state is conveyed by the stitch border alone, same as the sidebar.
+    document.querySelectorAll('.pill[data-opt]').forEach(function(pill){
+      var panel = document.getElementById('panel-' + pill.getAttribute('data-opt'));
+      if(!panel) return;
+      var d = getPanelDate(panel);
+      var color = colorByKey[monthKey(d.year, d.month)] || SEG_COLORS[0];
+      pill.style.background = color;
+      pill.style.borderColor = color;
+      pill.style.color = '#fff';
+    });
+    syncBarLayout();
   }
 
   document.addEventListener('click', function(e){
