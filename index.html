@@ -22,6 +22,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Travel Planner</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect x=%272%27 y=%272%27 width=%2728%27 height=%2728%27 rx=%278%27 fill=%27%23f7f1ea%27/><path d=%27M 16.0,6.0 L 18.47,12.6 L 25.51,12.91 L 19.99,17.3 L 21.88,24.09 L 16.0,20.2 L 10.12,24.09 L 12.01,17.3 L 6.49,12.91 L 13.53,12.6 Z%27 fill=%27%23ef9a5c%27/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <style>
   /* Vivid/joyful palette — pink, mint, and warm coral lifted from a kawaii-style
      reference — is now the main default. Plain-weave grid texture kept very
@@ -46,7 +49,8 @@
      the very top instead of a continuation of the same background. */
   body { margin:0; padding:32px 16px 32px 56px; background-color:var(--bg); color:var(--ink);
     background-image: var(--texture);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+    font-family:'Nunito',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  button, input, textarea, select { font-family:inherit; }
   .wrap { max-width:1120px; margin:0 auto; }
   header { text-align:center; margin-bottom:20px; }
   h1 { margin:0 0 10px; font-size:34px; }
@@ -663,7 +667,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-kawaii-default-soft-texture';
+  var BUILD_ID = 'build-2026-08-06-nunito-font';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
