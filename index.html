@@ -9,6 +9,13 @@
       document.documentElement.style.visibility = 'hidden';
     }
   } catch(e){}
+  // Applied here, before first paint, so switching color mode never
+  // flashes the other palette on the next load — same reasoning as the
+  // visibility hide above, just for the theme instead of the content.
+  try {
+    var savedTheme = localStorage.getItem('travelPlannerTheme');
+    if (savedTheme === 'kawaii') document.documentElement.setAttribute('data-theme', 'kawaii');
+  } catch(e){}
 })();
 </script>
 <meta charset="utf-8" />
@@ -21,6 +28,14 @@
        crosshatch — closer to an actual woven-linen look. */
     --texture: repeating-linear-gradient(0deg, rgba(28,52,56,.045) 0, rgba(28,52,56,.045) 1px, transparent 1px, transparent 5px),
       repeating-linear-gradient(90deg, rgba(28,52,56,.045) 0, rgba(28,52,56,.045) 1px, transparent 1px, transparent 5px); }
+  /* A second, more vivid/joyful palette — pink, mint, and warm coral lifted
+     from a kawaii-style reference — swapped in wholesale via [data-theme]
+     rather than touching any component's own CSS, since every component
+     already reads its colors from these same custom properties. */
+  :root[data-theme="kawaii"] { --bg:#f6f1fb; --card:#ffffff; --ink:#3d3568; --muted:#9b8fc0; --line:#ecdff5;
+    --primary:#ec6a9c; --primary-rgb:236,106,156; --secondary:#3fbf94; --secondary-rgb:63,191,148; --accent:#f2884d; --accent-rgb:242,136,77;
+    --texture: repeating-linear-gradient(0deg, rgba(61,53,104,.05) 0, rgba(61,53,104,.05) 1px, transparent 1px, transparent 5px),
+      repeating-linear-gradient(90deg, rgba(61,53,104,.05) 0, rgba(61,53,104,.05) 1px, transparent 1px, transparent 5px); }
   * { box-sizing:border-box; }
   /* A very faint woven-linen crosshatch under the flat page background —
      just enough to hint at fabric/embroidery without ever competing with
@@ -325,10 +340,27 @@
   .restore-banner button { border:none; border-radius:6px; padding:7px 12px; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
   .restore-banner .restore-yes { background:var(--primary); color:#fff; }
   .restore-banner .restore-no { background:rgba(255,255,255,.15); color:#fff; }
+
+  /* Bottom-right color-mode switcher: two circular swatches, each a
+     fixed 3-way conic split of one palette's primary/secondary/accent —
+     these are intentionally hardcoded to their own theme's real colors
+     (not var()) so both options stay visible no matter which is active. */
+  .theme-switcher { position:fixed; right:16px; bottom:16px; z-index:60; display:flex; gap:10px;
+    background:var(--card); padding:7px; border-radius:999px; box-shadow:0 6px 18px rgba(0,0,0,.18); }
+  .theme-dot { width:30px; height:30px; border-radius:50%; border:2px solid transparent; cursor:pointer;
+    padding:0; transition:transform .15s ease, border-color .15s ease; }
+  .theme-dot:hover { transform:scale(1.1); }
+  .theme-dot.active { border-color:var(--ink); box-shadow:0 0 0 2px var(--card); }
+  .theme-dot[data-theme-name="default"] { background: conic-gradient(#1c6672 0deg 120deg, #1fa896 120deg 240deg, #ef9a5c 240deg 360deg); }
+  .theme-dot[data-theme-name="kawaii"] { background: conic-gradient(#ec6a9c 0deg 120deg, #3fbf94 120deg 240deg, #f2884d 240deg 360deg); }
 </style>
 </head>
 <body>
 <div id="monthSidebar" class="month-sidebar"></div>
+<div class="theme-switcher" id="themeSwitcher">
+  <button type="button" class="theme-dot" data-theme-name="default" title="Classic palette"></button>
+  <button type="button" class="theme-dot" data-theme-name="kawaii" title="Kawaii palette"></button>
+</div>
 <div class="wrap">
   <header>
     <div class="pills">
@@ -630,7 +662,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-grid-texture-no-filter';
+  var BUILD_ID = 'build-2026-08-06-theme-switcher';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
@@ -2331,6 +2363,29 @@
   }
   reattachAll();
 
+  // Color-mode switcher: two fixed swatches (their own colors are
+  // hardcoded in CSS, not var()-driven, so both stay visible regardless
+  // of which is active) — clicking one applies its palette via the same
+  // [data-theme] attribute the early bootstrap script already checks, so
+  // a reload never flashes the other palette first.
+  var THEME_KEY = 'travelPlannerTheme';
+  function applyTheme(name){
+    if(name === 'kawaii') document.documentElement.setAttribute('data-theme', 'kawaii');
+    else document.documentElement.removeAttribute('data-theme');
+    document.querySelectorAll('.theme-dot').forEach(function(d){
+      d.classList.toggle('active', d.getAttribute('data-theme-name') === name);
+    });
+    try { localStorage.setItem(THEME_KEY, name); } catch(e){}
+  }
+  document.querySelectorAll('.theme-dot').forEach(function(dot){
+    dot.addEventListener('click', function(){ applyTheme(dot.getAttribute('data-theme-name')); });
+  });
+  (function initTheme(){
+    var saved = 'default';
+    try { saved = localStorage.getItem(THEME_KEY) || 'default'; } catch(e){}
+    applyTheme(saved);
+  })();
+
   // A locally-saved copy from before this content baseline was published
   // (see CONTENT_ID above) is sitting unapplied — ask instead of guessing,
   // so neither the user's own edits nor an intentional content fix can get
@@ -2394,7 +2449,7 @@
   var IS_HOSTED = location.protocol === 'http:' || location.protocol === 'https:';
   var LS_KEY = 'travelPlanHtml_v1';
 
-  var SAVE_EXCLUDE_SEL = '.icontoolbar, .tagpop, .linkpop, .monthpop, #tagData';
+  var SAVE_EXCLUDE_SEL = '.icontoolbar, .tagpop, .linkpop, .monthpop, #tagData, .theme-switcher';
 
   function buildSaveHtml(){
     persistTags();
