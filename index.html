@@ -60,19 +60,16 @@
      row as options are added. */
   .pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
     position:fixed; top:0; left:46px; right:16px; z-index:40;
-    background-color:var(--bg); background-image:var(--texture); padding:12px 8px 14px; }
+    background-color:var(--bg); background-image:var(--texture); padding:0 8px 14px; }
   /* Second-tier bookmarks: same tab-hanging-off-an-edge idea as the month
      sidebar, just smaller and hanging off the TOP edge instead of the
      left — rounded only at the bottom (the edge pointing away from what
-     they're attached to), with a shallower shadow than the sidebar's
-     tabs so the hierarchy (sidebar = month, pills = option within it)
-     reads at a glance. */
+     they're attached to). Flat, no shadow, so the hierarchy (sidebar =
+     month, pills = option within it) reads through scale/color alone. */
   .pill { cursor:pointer; font:inherit; font-size:14px; font-weight:600; border:1px solid var(--line);
-    background:var(--card); color:var(--ink); border-radius:0 0 12px 12px; padding:9px 16px 11px;
-    box-shadow:0 2px 0 rgba(0,0,0,.04), 0 3px 6px rgba(0,0,0,.1); }
+    background:var(--card); color:var(--ink); border-radius:0 0 12px 12px; padding:9px 16px 11px; }
   .pill span { opacity:.7; font-weight:700; }
-  .pill.on { background:var(--primary); border-color:var(--primary); color:#fff;
-    box-shadow:0 2px 0 rgba(0,0,0,.06), 0 4px 10px rgba(0,0,0,.18); }
+  .pill.on { background:var(--primary); border-color:var(--primary); color:#fff; }
   /* the selected option's stitch — open on top, since that's the edge
      it's "hanging" from, mirroring the sidebar's own current-tab treatment */
   .pill.on::after {
@@ -96,7 +93,11 @@
   .wdhead { text-align:center; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
   .cell { background:var(--card); border:1px solid var(--line); border-radius:12px; min-height:104px; padding:8px; }
   .cell.empty { background:transparent; border:none; min-height:0; }
-  .cell.holi { background:rgba(var(--secondary-rgb),.08); border-color:rgba(var(--secondary-rgb),.28); }
+  /* Opaque white backing behind the tint so the page texture never shows
+     through a holiday cell that has no other content sitting on top of it. */
+  .cell.holi { background-color:var(--card);
+    background-image:linear-gradient(rgba(var(--secondary-rgb),.08), rgba(var(--secondary-rgb),.08));
+    border-color:rgba(var(--secondary-rgb),.28); }
   .cell.active { border-color:var(--primary); box-shadow:0 1px 3px rgba(0,0,0,.06); }
   .cellhead { display:flex; align-items:baseline; gap:6px; }
   .daynum { font-weight:700; font-size:15px; }
@@ -128,25 +129,17 @@
   @media print { body { background:#fff; padding:0; } .panel { display:block !important; } .pills { display:none; } }
   /* Styled like the little fabric/paper page-marker tabs that stick out
      from the edge of a book — separate rounded tabs with a gap of page
-     showing between them, each with its own drop shadow so it reads as
-     physically resting on top of the page, rather than one continuous
-     colored bar running the full height. */
+     showing between them. Flat, no drop shadow. */
   .month-sidebar { position:fixed; left:0; top:28px; width:46px; z-index:30; display:flex;
     flex-direction:column; gap:14px; height:calc(100vh - 56px); }
   .month-segment { position:relative; flex:1 1 0; min-height:64px; display:flex;
     align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
-    border-radius:0 16px 16px 0; box-shadow:3px 3px 0 rgba(0,0,0,.06), 4px 5px 10px rgba(0,0,0,.22);
-    transition:box-shadow .15s ease; }
-  .month-segment:hover { box-shadow:3px 3px 0 rgba(0,0,0,.06), 5px 6px 14px rgba(0,0,0,.28); }
+    border-radius:0 16px 16px 0; }
   /* the segment matching whichever option is currently on screen — left
      edge stays flush with the others (no horizontal shift); a running
      stitch traced just inside the edge (like hand-sewing around a fabric
-     patch) marks it as "in use" instead. No filter here on purpose — a
-     filter on an element that's fully torn down and rebuilt on every
-     change (renderMonthSidebar() clears innerHTML each time) is a known
-     trigger for stale/ghost shadow rendering in some browsers, since
-     filter forces its own compositing layer. */
-  .month-segment.current { box-shadow:3px 3px 0 rgba(0,0,0,.08), 6px 7px 16px rgba(0,0,0,.32); z-index:1; }
+     patch) marks it as "in use" instead. */
+  .month-segment.current { z-index:1; }
   .month-segment.current::before {
     content:''; position:absolute; top:5px; right:5px; bottom:5px; left:0; pointer-events:none;
     border-radius:0 12px 12px 0;
@@ -320,7 +313,7 @@
     .month-sidebar { position:fixed; top:0; left:0; right:0; width:auto; height:auto;
       flex-direction:row; gap:8px; padding:0 8px 8px; overflow-x:auto; z-index:35; }
     .month-segment { flex:0 0 auto; min-width:88px; min-height:0; padding:10px 8px;
-      border-radius:0 0 14px 14px; box-shadow:0 3px 0 rgba(0,0,0,.06), 0 4px 10px rgba(0,0,0,.22); }
+      border-radius:0 0 14px 14px; }
     .seg-label { writing-mode:horizontal-tb; transform:none; font-size:12px; letter-spacing:.05em; }
     .month-segment.current::before { top:0; right:5px; bottom:5px; left:5px;
       border-radius:0 0 11px 11px; border-width:2px; border-color:rgba(255,255,255,.85);
@@ -667,7 +660,7 @@
   // "cached edits from a baseline that's since been replaced" — without it,
   // a stale local cache would silently keep masking every future publish,
   // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-nunito-font';
+  var BUILD_ID = 'build-2026-08-06-flush-pills-no-shadows-opaque-holiday';
 
   // Bumped ONLY when the published *content* baseline is intentionally
   // overridden from outside the normal edit flow (e.g. restoring lost trip
