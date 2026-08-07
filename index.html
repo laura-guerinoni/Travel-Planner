@@ -672,15 +672,12 @@
   // Identifies which shared Firebase project this page talks to — not a
   // secret; access control is enforced entirely by the Realtime Database's
   // security rules (open read/write, no auth — see setup notes), not by
-  // hiding this config. REPLACE_ME values need to come from an actual
-  // Firebase project (console.firebase.google.com) before sync will work;
-  // until then the app just falls back to the static baked-in content via
-  // the 2.5s failsafe reveal in the bootstrap script.
+  // hiding this config.
   var firebaseConfig = {
-    apiKey: 'REPLACE_ME',
-    authDomain: 'REPLACE_ME.firebaseapp.com',
-    databaseURL: 'https://REPLACE_ME-default-rtdb.firebaseio.com',
-    projectId: 'REPLACE_ME'
+    apiKey: 'AIzaSyBV5E4Q_jOxcVvzCwnpbKo8nT3s2ldSF6Y',
+    authDomain: 'travel-dcc5f.firebaseapp.com',
+    databaseURL: 'https://travel-dcc5f-default-rtdb.europe-west1.firebasedatabase.app',
+    projectId: 'travel-dcc5f'
   };
   var planRef = null;
   if(IS_HOSTED){
