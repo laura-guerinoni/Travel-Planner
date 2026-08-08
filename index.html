@@ -1954,9 +1954,27 @@
     tryApplyPendingRemoteUpdate();
   }
 
+  // Internal option IDs (panel-option-N) must stay globally unique for the
+  // lifetime of the page, even across removals — deriving N from the
+  // *current* panel count (as this used to) reissues an already-used ID as
+  // soon as anything is removed, producing two panels with the same id.
+  // That breaks every id-based lookup (option switching, month filtering,
+  // sidebar sync), which is what made tag/delete editing look "blocked" on
+  // newly created months/options. A monotonically increasing counter, seeded
+  // from the highest N already present, guarantees a fresh id every time.
+  var nextOptionN = (function(){
+    var max = 0;
+    document.querySelectorAll('.panel[id^="panel-option-"]').forEach(function(p){
+      var m = p.id.match(/^panel-option-(\d+)$/);
+      if(m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return max;
+  })();
+  function nextOptionId(){ nextOptionN += 1; return nextOptionN; }
+
   function createOption(year, month){
     var panels = document.querySelectorAll('.panel');
-    var n = panels.length + 1; // internal id, must stay globally unique across all months
+    var n = nextOptionId(); // internal id, must stay globally unique across all months
     var displayNum = 1; // the "1.", "2." shown to the user — counts only within this month
     panels.forEach(function(p){ var d = getPanelDate(p); if(d.year === year && d.month === month) displayNum++; });
     var template = panels[0];
@@ -2007,8 +2025,7 @@
     var srcPill = document.querySelector('.pill[data-opt="' + opt + '"]');
     var srcBudgetLi = document.querySelector('.budget li[data-opt="' + opt + '"]');
     if(!srcPanel || !srcPill) return;
-    var panels = document.querySelectorAll('.panel');
-    var n = panels.length + 1;
+    var n = nextOptionId();
     var clone = srcPanel.cloneNode(true);
     clone.id = 'panel-option-' + n;
     clone.classList.remove('on');
