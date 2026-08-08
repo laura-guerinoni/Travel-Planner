@@ -4,9 +4,13 @@
 <script>
 (function(){
   try {
-    if ((location.protocol === 'http:' || location.protocol === 'https:') &&
-        localStorage.getItem('travelPlanHtml_v1')) {
+    // Hidden unconditionally while hosted — with a shared backend as the
+    // source of truth, we can no longer tell synchronously whether there's
+    // real content coming, so always hide first and let the Firebase
+    // listener (or the failsafe below, if it never fires) reveal the page.
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
       document.documentElement.style.visibility = 'hidden';
+      setTimeout(function(){ document.documentElement.style.visibility = ''; }, 2500);
     }
   } catch(e){}
   // Applied here, before first paint, so switching color mode never
@@ -345,13 +349,6 @@
     .cellhead { gap: 8px; }
   }
 
-  .restore-banner { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:80;
-    background:var(--ink); color:#fff; border-radius:10px; padding:12px 14px; box-shadow:0 10px 28px rgba(0,0,0,.3);
-    display:flex; align-items:center; gap:12px; max-width:min(90vw, 520px); font-size:13px; }
-  .restore-banner button { border:none; border-radius:6px; padding:7px 12px; font:inherit; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .restore-banner .restore-yes { background:var(--primary); color:#fff; }
-  .restore-banner .restore-no { background:rgba(255,255,255,.15); color:#fff; }
-
   /* Bottom-right color-mode switcher: two circular swatches, each a
      fixed 3-way conic split of one palette's primary/secondary/accent —
      these are intentionally hardcoded to their own theme's real colors
@@ -384,6 +381,7 @@
     <button id="saveBtn" type="button" class="icon-btn" title="Download a copy of the current plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></button>
     <span id="saveStatus" class="save-status"></span>
     <span id="changeFileBtn" class="save-status changelink" style="display:none;">change save location</span>
+    <span id="presenceCount" class="save-status presence-count"></span>
   </div>
   <section class="panel" id="panel-option-1" data-holiday-start="12" data-holiday-end="25">
     <div class="grid heads"><div class="wdhead">Mon</div><div class="wdhead">Tue</div><div class="wdhead">Wed</div><div class="wdhead">Thu</div><div class="wdhead">Fri</div><div class="wdhead">Sat</div><div class="wdhead">Sun</div></div><div class="grid week"><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell empty"></div><div class="cell"><div class="cellhead"><span class="daynum">1</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">2</span><span class="wd">Sun</span></div></div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">3</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">4</span><span class="wd">Tue</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">5</span><span class="wd">Wed</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">6</span><span class="wd">Thu</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">7</span><span class="wd">Fri</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">8</span><span class="wd">Sat</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">9</span><span class="wd">Sun</span></div></div></div><div class="grid banner-row"><div class="banner" style="grid-column: 3 / 8;">Holiday — time off · Aug 12–25</div></div><div class="grid week"><div class="cell"><div class="cellhead"><span class="daynum">10</span><span class="wd">Mon</span></div></div><div class="cell"><div class="cellhead"><span class="daynum">11</span><span class="wd">Tue</span></div></div><div class="cell active"><div class="cellhead"><span class="daynum">12</span><span class="wd">Wed</span></div><p class="loc">Košice → Budapestt</p><ul class="acts"><li>
@@ -665,75 +663,42 @@
   }
 ]
 </script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script>
 (function(){
-  // Bump this string every time a new baseline is published (e.g. after
-  // manually merging live edits into the repo, as happened here). It lets
-  // the restore step below tell "cached edits on top of THIS baseline" from
-  // "cached edits from a baseline that's since been replaced" — without it,
-  // a stale local cache would silently keep masking every future publish,
-  // since it would otherwise always be treated as newer than the file.
-  var BUILD_ID = 'build-2026-08-06-bookmark-clicks-toolbar-budget';
+  var IS_HOSTED = location.protocol === 'http:' || location.protocol === 'https:';
 
-  // Bumped ONLY when the published *content* baseline is intentionally
-  // overridden from outside the normal edit flow (e.g. restoring lost trip
-  // data, as happened here) — never on a routine code deploy. A locally
-  // saved copy tagged with a different (or missing) CONTENT_ID might be
-  // stale relative to a baseline change like that, so it's held for
-  // confirmation (see the banner wired up further down) instead of either
-  // auto-restoring it (which could silently re-mask the very fix that was
-  // just published) or discarding it (which is exactly the data-loss bug
-  // this whole mechanism exists to prevent).
-  var CONTENT_ID = 'poland-recovery-1';
-  var pendingLocalSave = null;
-  // Captured before any restore touches #tagData, so new default tags
-  // (e.g. transport modes added after someone already has their own saved
-  // tag list) can be merged in below rather than silently lost — a saved
-  // tag list should never mean missing out on new built-in options.
+  // Identifies which shared Firebase project this page talks to — not a
+  // secret; access control is enforced entirely by the Realtime Database's
+  // security rules (open read/write, no auth — see setup notes), not by
+  // hiding this config.
+  var firebaseConfig = {
+    apiKey: 'AIzaSyBV5E4Q_jOxcVvzCwnpbKo8nT3s2ldSF6Y',
+    authDomain: 'travel-dcc5f.firebaseapp.com',
+    databaseURL: 'https://travel-dcc5f-default-rtdb.europe-west1.firebasedatabase.app',
+    projectId: 'travel-dcc5f'
+  };
+  var planRef = null;
+  if(IS_HOSTED){
+    try {
+      firebase.initializeApp(firebaseConfig);
+      planRef = firebase.database().ref('plan');
+    } catch(e){ console.warn('Firebase init failed — falling back to static content', e); }
+  }
+  var CLIENT_ID = 'c-' + Math.random().toString(36).slice(2, 10);
+
+  // Captured before any remote snapshot touches #tagData, so new default
+  // tags (e.g. transport modes added after the shared plan already has its
+  // own tag list) can be merged in below rather than silently lost — a
+  // saved tag list should never mean missing out on new built-in options.
   var DEFAULT_TAGS_JSON = document.getElementById('tagData').textContent;
-
-  // On a hosted (http/https) page, restore the last autosaved version from
-  // localStorage before anything else runs, so the rest of this script's
-  // init (attaching controls, rendering the holiday banner, etc.) operates
-  // on the restored content rather than the static defaults baked into the
-  // file. Pure DOM replacement — no document.write, which was tried first
-  // and ended up duplicating the whole page instead of replacing it.
-  (function restoreFromLocalStorage(){
-    var hosted = location.protocol === 'http:' || location.protocol === 'https:';
-    if(!hosted) return;
-    try{
-      var raw = localStorage.getItem('travelPlanHtml_v1');
-      if(raw){
-        var entry = null;
-        try { entry = JSON.parse(raw); } catch(e){ entry = null; }
-        var html = entry && entry.html ? entry.html : (typeof raw === 'string' && raw.indexOf('<') === 0 ? raw : null);
-        if(html && entry && entry.contentId === CONTENT_ID){
-          // Same content baseline as when this was saved — safe to restore
-          // silently, exactly like a normal build-to-build autosave always
-          // should be (never discard edits just because the code changed).
-          var parsed = new DOMParser().parseFromString(html, 'text/html');
-          var newWrap = parsed.querySelector('.wrap');
-          var curWrap = document.querySelector('.wrap');
-          if(newWrap && curWrap) curWrap.replaceWith(newWrap);
-          var newTagData = parsed.getElementById('tagData');
-          var curTagData = document.getElementById('tagData');
-          if(newTagData && curTagData) curTagData.textContent = newTagData.textContent;
-        } else if(html){
-          // Missing/older contentId: don't know whether this predates a
-          // baseline change. Leave the fresh content showing and let the
-          // user decide via the banner below, instead of guessing.
-          pendingLocalSave = html;
-        }
-      }
-    } catch(e){}
-    document.documentElement.style.visibility = '';
-  })();
 
   var TAGDATA_EL = document.getElementById('tagData');
   var TAGS = [];
   try { TAGS = JSON.parse(TAGDATA_EL.textContent); } catch(e){ TAGS = []; }
 
-  (function mergeDefaultTags(){
+  function mergeDefaultTags(){
     try {
       var defaults = JSON.parse(DEFAULT_TAGS_JSON);
       var existingKeys = {};
@@ -745,7 +710,7 @@
       });
       if(added) TAGDATA_EL.textContent = JSON.stringify(TAGS, null, 2);
     } catch(e){}
-  })();
+  }
 
   // .pill-name is deliberately NOT in here — a pill's name only becomes
   // contenteditable on double-click (see the .pills dblclick handler below),
@@ -910,6 +875,15 @@
   });
   document.querySelector('.pills').addEventListener('focusout', function(e){
     if(e.target.classList && e.target.classList.contains('pill-name')) e.target.contentEditable = 'false';
+    tryApplyPendingRemoteUpdate();
+  });
+  // Every other EDITABLE_SEL field is permanently contenteditable (unlike
+  // pill-name, which only toggles on/off around a double-click), so there's
+  // no existing per-field focusout hook to piggyback on — one document-level
+  // listener covers all of them for the "apply the queued remote update as
+  // soon as this field is no longer focused" purpose.
+  document.addEventListener('focusout', function(e){
+    if(e.target.matches && e.target.matches(EDITABLE_SEL)) tryApplyPendingRemoteUpdate();
   });
 
   function parseMoney(str){
@@ -1016,7 +990,7 @@
   }
 
   var openPop = null;
-  function closePop(){ if(openPop){ openPop.remove(); openPop = null; } }
+  function closePop(){ if(openPop){ openPop.remove(); openPop = null; tryApplyPendingRemoteUpdate(); } }
   document.addEventListener('click', function(e){
     if(openPop && !openPop.contains(e.target) && !e.target.closest('.chip') &&
        !e.target.closest('.linkbtn') && !e.target.closest('.itemmenu-btn')){
@@ -1516,6 +1490,7 @@
     document.removeEventListener('pointermove', onCellDragMove);
     document.removeEventListener('pointerup', onCellDragEnd);
     document.removeEventListener('pointercancel', onCellDragEnd);
+    tryApplyPendingRemoteUpdate();
   }
   function swapCellContent(a, b){
     var aLoc = a.querySelector(':scope > .loc'), aActs = a.querySelector(':scope > .acts'), aCost = a.querySelector(':scope > .cost');
@@ -1619,6 +1594,7 @@
     document.removeEventListener('pointermove', onActDragMove);
     document.removeEventListener('pointerup', onActDragEnd);
     document.removeEventListener('pointercancel', onActDragEnd);
+    tryApplyPendingRemoteUpdate();
   }
 
   function attachCellControls(cell){
@@ -1811,6 +1787,7 @@
     document.removeEventListener('pointermove', onDragMove);
     document.removeEventListener('pointerup', onDragEnd);
     document.removeEventListener('pointercancel', onDragEnd);
+    tryApplyPendingRemoteUpdate();
   }
 
   function renderHoliday(panel){
@@ -1974,6 +1951,7 @@
     document.removeEventListener('pointermove', onPillDragMove);
     document.removeEventListener('pointerup', onPillDragEnd);
     document.removeEventListener('pointercancel', onPillDragEnd);
+    tryApplyPendingRemoteUpdate();
   }
 
   function createOption(year, month){
@@ -2403,6 +2381,13 @@
     // strip it defensively every time content gets (re)applied, regardless
     // of where that content came from.
     document.querySelectorAll('.fine').forEach(function(el){ el.remove(); });
+    // #icontoolbar (save button/status/presence) lives inside .wrap, so a
+    // wholesale .wrap swap always produces fresh toolbar nodes — re-point
+    // (and, only if they actually changed, re-wire) statusEl/saveBtn/
+    // changeFileBtn here every time, or the save button silently loses its
+    // click handler and the "Editing…/Saved ✓" status stops updating after
+    // the very first remote snapshot or undo/redo.
+    if(typeof wireIconToolbar === 'function') wireIconToolbar();
     document.querySelectorAll(EDITABLE_SEL).forEach(makeEditable);
     document.querySelectorAll('.acts li').forEach(attachItemControls);
     document.querySelectorAll('.grid .cell').forEach(attachCellControls);
@@ -2437,40 +2422,6 @@
     applyTheme(saved);
   })();
 
-  // A locally-saved copy from before this content baseline was published
-  // (see CONTENT_ID above) is sitting unapplied — ask instead of guessing,
-  // so neither the user's own edits nor an intentional content fix can get
-  // silently clobbered by the other.
-  if(pendingLocalSave){
-    var banner = document.createElement('div');
-    banner.className = 'restore-banner';
-    var msg = document.createElement('span');
-    msg.textContent = 'Found a version of this plan saved in your browser that doesn’t match what’s shown below.';
-    banner.appendChild(msg);
-    var restoreBtn = document.createElement('button');
-    restoreBtn.type = 'button'; restoreBtn.className = 'restore-yes'; restoreBtn.textContent = 'Restore it';
-    var dismissBtn = document.createElement('button');
-    dismissBtn.type = 'button'; dismissBtn.className = 'restore-no'; dismissBtn.textContent = 'Keep this version';
-    restoreBtn.addEventListener('click', function(){
-      var parsed = new DOMParser().parseFromString(pendingLocalSave, 'text/html');
-      var newWrap = parsed.querySelector('.wrap');
-      var curWrap = document.querySelector('.wrap');
-      if(newWrap && curWrap) curWrap.replaceWith(newWrap);
-      var newTagData = parsed.getElementById('tagData');
-      if(newTagData){
-        TAGDATA_EL.textContent = newTagData.textContent;
-        try { TAGS = JSON.parse(newTagData.textContent); } catch(err){ TAGS = []; }
-      }
-      reattachAll();
-      banner.remove();
-      scheduleAutoSave();
-    });
-    dismissBtn.addEventListener('click', function(){ banner.remove(); });
-    banner.appendChild(restoreBtn);
-    banner.appendChild(dismissBtn);
-    document.body.appendChild(banner);
-  }
-
   document.addEventListener('input', function(e){
     if(e.target.classList && e.target.classList.contains('price-val')){
       var priceLi = e.target.closest('.acts > li[data-span-start]');
@@ -2497,7 +2448,8 @@
   var statusEl = document.getElementById('saveStatus');
   var changeFileBtn = document.getElementById('changeFileBtn');
 
-  var IS_HOSTED = location.protocol === 'http:' || location.protocol === 'https:';
+  // Only used now for the one-time migration seed read (see
+  // getMigrationSeedPayload below) — no longer written to.
   var LS_KEY = 'travelPlanHtml_v1';
 
   var SAVE_EXCLUDE_SEL = '.icontoolbar, .tagpop, .linkpop, .monthpop, #tagData, .theme-switcher';
@@ -2581,9 +2533,32 @@
     }
   }
 
-  function saveToLocalStorage(htmlStr){
-    try{ localStorage.setItem(LS_KEY, JSON.stringify({ build: BUILD_ID, contentId: CONTENT_ID, html: htmlStr })); return true; }
-    catch(err){ return false; }
+  // Payload for the shared backend is built from captureUndoSnapshot()
+  // (defined further down) rather than buildSaveHtml() — that function
+  // already does exactly the right stripping work (persistTags, clone only
+  // .wrap, strip .jsctl/popovers/contenteditable, blank #saveStatus) and
+  // already returns {wrap, tagData} in the shape needed here, so there's no
+  // reason to additionally clone the *whole document* on every autosave.
+  function buildBackendPayload(){
+    var snap = captureUndoSnapshot();
+    return { wrapHtml: snap.wrap, tagDataJson: snap.tagData };
+  }
+  function saveToBackend(payload){
+    if(!planRef) return Promise.resolve(false);
+    var write = planRef.set({
+      wrapHtml: payload.wrapHtml,
+      tagDataJson: payload.tagDataJson,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedBy: CLIENT_ID
+    }).then(function(){ return true; }).catch(function(){ return false; });
+    // set() only resolves once the server acks the write — genuinely offline
+    // (or a misconfigured project), that ack never arrives and the promise
+    // hangs forever, leaving the status stuck on "Editing…" indefinitely.
+    // Racing a timeout turns "stuck silently" into "told you it failed" —
+    // the write itself is still queued client-side and will still go
+    // through once connectivity returns, this only affects the status text.
+    var timeout = new Promise(function(resolve){ setTimeout(function(){ resolve(false); }, 8000); });
+    return Promise.race([write, timeout]);
   }
 
   async function doSave(){
@@ -2639,14 +2614,13 @@
   }
 
   async function triggerAutoSave(){
-    var htmlStr = buildSaveHtml();
-
     if(IS_HOSTED){
-      var ok = saveToLocalStorage(htmlStr);
-      setStatus(ok ? 'Saved ✓' : 'Autosave failed — storage full', ok);
+      var ok = await saveToBackend(buildBackendPayload());
+      setStatus(ok ? 'Saved ✓' : 'Autosave failed — check connection', ok);
       return;
     }
 
+    var htmlStr = buildSaveHtml();
     if(!cachedHandle) cachedHandle = await idbGetHandle();
     if(!cachedHandle){
       setStatus('Click 💾 once to enable autosave');
@@ -2666,23 +2640,44 @@
   function scheduleAutoSave(){
     setStatus('Editing…');
     clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(triggerAutoSave, IS_HOSTED ? 400 : 900);
+    // Shorter when hosted (was 400ms) — shrinks the last-write-wins collision
+    // window now that autosave can race against a different person's edit,
+    // not just occasional same-browser other-tab writes.
+    autoSaveTimer = setTimeout(triggerAutoSave, IS_HOSTED ? 250 : 900);
   }
 
-  saveBtn.addEventListener('click', function(){ doSave(); });
-  saveBtn.title = IS_HOSTED ? 'Download a copy of the current plan' : 'Save';
-  if(changeFileBtn){
-    if(IS_HOSTED){
-      changeFileBtn.style.display = 'none';
-    } else {
-      changeFileBtn.addEventListener('click', async function(){
-        cachedHandle = null;
-        await idbSetHandle(null);
+  // #icontoolbar (saveBtn/statusEl/changeFileBtn/presenceEl) lives INSIDE
+  // .wrap, so every wholesale .wrap replaceWith() (undo/redo, a remote
+  // snapshot arriving) silently produces brand-new toolbar nodes — the
+  // saveBtn/statusEl/changeFileBtn variables captured once above would go
+  // on pointing at the old, now-detached elements forever, and the save
+  // button would lose its click handler entirely. reattachAll() already
+  // re-runs after every one of those replacements, so re-querying and
+  // (only when the node actually changed) re-wiring from there keeps these
+  // refs — and the click handler — pointed at whatever's actually live.
+  function wireIconToolbar(){
+    var freshSaveBtn = document.getElementById('saveBtn');
+    statusEl = document.getElementById('saveStatus');
+    if(freshSaveBtn === saveBtn) return;
+    saveBtn = freshSaveBtn;
+    changeFileBtn = document.getElementById('changeFileBtn');
+    saveBtn.addEventListener('click', function(){ doSave(); });
+    saveBtn.title = IS_HOSTED ? 'Download a copy of the current plan' : 'Save';
+    if(changeFileBtn){
+      if(IS_HOSTED){
+        changeFileBtn.style.display = 'none';
+      } else {
+        changeFileBtn.addEventListener('click', async function(){
+          cachedHandle = null;
+          await idbSetHandle(null);
+          refreshChangeFileBtn();
+          setStatus('Next save will ask where to save', true);
+        });
         refreshChangeFileBtn();
-        setStatus('Next save will ask where to save', true);
-      });
+      }
     }
   }
+  wireIconToolbar();
 
   // ---- undo/redo (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z): coarse, snapshot-based —
   // captures a clean copy of .wrap + tagData (same shape as an autosave)
@@ -2769,32 +2764,119 @@
   mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true,
     attributeFilter: ['style', 'class', 'data-links', 'data-img', 'href', 'src', 'data-holidays', 'data-year', 'data-month', 'data-icon', 'data-name'] });
 
-  // ---- cross-tab live sync: the 'storage' event fires in every OTHER tab
-  // on this origin whenever one tab's autosave writes to localStorage, so
-  // open tabs stay in sync without a manual reload. Skips the restore when
-  // the incoming content is already identical to avoid a redundant
-  // restore -> re-save -> storage-event ping-pong between tabs. ----
-  window.addEventListener('storage', function(e){
-    if(e.key !== LS_KEY || !e.newValue) return;
-    try{
-      var entry = JSON.parse(e.newValue);
-      if(!entry || !entry.html) return;
-      var parsed = new DOMParser().parseFromString(entry.html, 'text/html');
-      var newWrap = parsed.querySelector('.wrap');
-      if(!newWrap || newWrap.outerHTML === lastSnapshot.wrap) return;
-      var newTagData = parsed.getElementById('tagData');
-      restoringHistory = true;
-      document.querySelector('.wrap').replaceWith(newWrap);
-      if(newTagData){
-        TAGDATA_EL.textContent = newTagData.textContent;
-        try { TAGS = JSON.parse(newTagData.textContent); } catch(err){ TAGS = []; }
+  // ---- shared real-time sync: one Firebase listener replaces both the old
+  // one-time localStorage restore AND the old same-browser-only 'storage'
+  // event listener. ref.on('value', cb) fires immediately with whatever the
+  // current shared value is (the "initial load" case) and again on every
+  // future change from ANY connected browser/device (the "live sync" case)
+  // — RTDB gives us both for free from one registration. ----
+
+  // True while some in-progress local interaction would be corrupted by a
+  // remote DOM swap arriving right now (a focused editable field mid-
+  // keystroke, an active drag whose closure holds a direct reference into
+  // the current .wrap, or an open popover anchored to a node that's about
+  // to be replaced). Checked before ever applying a remote snapshot.
+  function isLocallyBusy(){
+    var ae = document.activeElement;
+    if(ae && ae.isContentEditable && ae.matches && ae.matches(EDITABLE_SEL + ', .pill-name')) return true;
+    if(pillDrag || cellDrag || actDrag || dragState) return true;
+    if(openPop) return true;
+    return false;
+  }
+
+  var pendingRemoteUpdate = null;
+  // Only the latest queued value is kept (never a list) — consistent with
+  // the last-write-wins model below. Wired into every existing "the busy
+  // condition just ended" hook (drag-end handlers, popover close, field
+  // blur) rather than polling.
+  function tryApplyPendingRemoteUpdate(){
+    if(pendingRemoteUpdate && !isLocallyBusy()){
+      var val = pendingRemoteUpdate;
+      pendingRemoteUpdate = null;
+      applyRemoteSnapshot(val);
+    }
+  }
+
+  function applyRemoteSnapshot(val){
+    var parsed = new DOMParser().parseFromString(val.wrapHtml, 'text/html');
+    var newWrap = parsed.querySelector('.wrap');
+    if(!newWrap) return;
+    restoringHistory = true;
+    document.querySelector('.wrap').replaceWith(newWrap);
+    if(val.tagDataJson){
+      TAGDATA_EL.textContent = val.tagDataJson;
+      try { TAGS = JSON.parse(val.tagDataJson); } catch(err){ TAGS = []; }
+    }
+    reattachAll();
+    lastSnapshot = captureUndoSnapshot();
+    restoringHistory = false;
+    setStatus('Synced ✓', true);
+  }
+
+  // One-time migration seed (only ever runs while /plan is empty): prefer
+  // this browser's existing localStorage save — the real, possibly-newer
+  // content someone was actually editing — over the static defaults baked
+  // into whichever copy of the file happens to load first.
+  function getMigrationSeedPayload(){
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if(raw){
+        var entry = JSON.parse(raw);
+        var html = entry && entry.html;
+        if(html){
+          var parsed = new DOMParser().parseFromString(html, 'text/html');
+          var wrap = parsed.querySelector('.wrap');
+          var tagData = parsed.getElementById('tagData');
+          if(wrap) return { wrapHtml: wrap.outerHTML, tagDataJson: tagData ? tagData.textContent : TAGDATA_EL.textContent };
+        }
       }
-      reattachAll();
-      lastSnapshot = captureUndoSnapshot();
-      restoringHistory = false;
-      setStatus('Synced from another tab ✓', true);
-    } catch(err){}
-  });
+    } catch(e){}
+    return buildBackendPayload(); // fallback: whatever's currently in the live page
+  }
+
+  if(IS_HOSTED && planRef){
+    var firstLoadDone = false;
+    planRef.on('value', function(snapshot){
+      var val = snapshot.val();
+      if(!firstLoadDone){
+        firstLoadDone = true;
+        if(val && val.wrapHtml){
+          applyRemoteSnapshot(val);
+          mergeDefaultTags();
+        } else {
+          saveToBackend(getMigrationSeedPayload());
+        }
+        document.documentElement.style.visibility = '';
+        return;
+      }
+      if(!val || !val.wrapHtml) return;
+      // Firebase echoes our own writes straight back to this same listener,
+      // often before the debounced local snapshots below have caught up —
+      // without this check, re-applying our own echo via a wholesale .wrap
+      // replace would itself count as a new "relevant" mutation to the
+      // autosave observer, scheduling another write, which echoes back
+      // again, forever. Skipping anything tagged with our own CLIENT_ID
+      // breaks that loop; only a genuinely different client's write reaches
+      // applyRemoteSnapshot below.
+      if(val.updatedBy === CLIENT_ID) return;
+      if(val.wrapHtml === lastSnapshot.wrap) return;
+      if(isLocallyBusy()){ pendingRemoteUpdate = val; return; }
+      applyRemoteSnapshot(val);
+    });
+
+    // Lightweight "N viewing" presence — not used for conflict resolution,
+    // just situational awareness. onDisconnect() cleans this client's entry
+    // up automatically (tab close, network drop) with no server code.
+    var presenceRef = firebase.database().ref('presence/' + CLIENT_ID);
+    presenceRef.set({ ts: firebase.database.ServerValue.TIMESTAMP });
+    presenceRef.onDisconnect().remove();
+    firebase.database().ref('presence').on('value', function(s){
+      var val = s.val();
+      var count = val ? Object.keys(val).length : 1;
+      var el = document.getElementById('presenceCount');
+      if(el) el.textContent = count > 1 ? count + ' viewing' : '';
+    });
+  }
 
   if(!IS_HOSTED){
     (async function initHandle(){
